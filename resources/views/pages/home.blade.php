@@ -93,11 +93,55 @@
 </section>
 
 {{-- TESTIMONIAL --}}
-<section class="py-16 bg-linen">
+<section class="py-12 md:py-16 bg-linen overflow-hidden">
     <div class="max-w-7xl mx-auto px-4">
-        <div class="text-center mb-8" data-aos="fade-up">
+        <div class="text-center mb-8 md:mb-12" data-aos="fade-up">
             <span class="text-xs uppercase tracking-widest text-terracotta">Kata Mereka</span>
             <h2 class="font-playfair text-3xl text-dark-oak mt-2">Pelanggan Puas Kami</h2>
+        </div>
+
+        <div class="flex flex-col gap-8 md:gap-16 max-w-4xl mx-auto py-4 md:py-8">
+            <!-- Testimoni 1 (Muncul dari kiri ke kanan) -->
+            <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-amber-100/50 w-full md:w-4/5 self-start" data-aos="fade-right">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-12 h-12 bg-sage-green/20 rounded-full flex items-center justify-center text-sage-green font-bold text-xl">A</div>
+                    <div>
+                        <h4 class="font-medium text-dark-oak">Amanda</h4>
+                        <div class="flex text-amber-400 text-sm">★★★★★</div>
+                    </div>
+                </div>
+                <p class="text-warm-gray text-sm leading-relaxed">
+                    "Buketnya cantik banget! Sama persis dengan yang digambar, bunganya juga segar tahan sampai beberapa hari. Adminnya ramah banget bisa custom warna pita. Next bakal order di sini lagi buat wisuda adik."
+                </p>
+            </div>
+
+            <!-- Testimoni 2 (Muncul dari kanan ke kiri) -->
+            <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-amber-100/50 w-full md:w-4/5 self-end" data-aos="fade-left">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-12 h-12 bg-sage-green/20 rounded-full flex items-center justify-center text-sage-green font-bold text-xl">B</div>
+                    <div>
+                        <h4 class="font-medium text-dark-oak">Bastian</h4>
+                        <div class="flex text-amber-400 text-sm">★★★★★</div>
+                    </div>
+                </div>
+                <p class="text-warm-gray text-sm leading-relaxed">
+                    "Pengiriman super cepat dan sangat aman, area Sidoarjo mantap. Buket untuk anniversary saya sampai dengan selamat. Desainnya sangat elegan dan istri saya juga suka sekali!"
+                </p>
+            </div>
+
+            <!-- Testimoni 3 (Muncul dari kiri lagi) -->
+            <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-amber-100/50 w-full md:w-4/5 self-start" data-aos="fade-right">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-12 h-12 bg-sage-green/20 rounded-full flex items-center justify-center text-sage-green font-bold text-xl">C</div>
+                    <div>
+                        <h4 class="font-medium text-dark-oak">Clara</h4>
+                        <div class="flex text-amber-400 text-sm">★★★★★</div>
+                    </div>
+                </div>
+                <p class="text-warm-gray text-sm leading-relaxed">
+                    "Pesan mendadak buat acara wisuda teman dan ternyata bisa! Buket snack dan uangnya rapi banget. Benar-benar penyelamat di saat mepet. Bakal langganan terus!"
+                </p>
+            </div>
         </div>
     </div>
 </section>
