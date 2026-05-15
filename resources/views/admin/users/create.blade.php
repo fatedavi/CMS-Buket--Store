@@ -1,0 +1,35 @@
+@extends('layouts.admin')
+
+@section('content')
+<h1 class="font-playfair text-2xl text-dark-oak mb-6">Tambah Pengguna</h1>
+
+<div class="bg-white rounded-2xl border border-amber-100 p-6">
+    <form action="{{ route('admin.users.store') }}" method="POST" class="space-y-4">
+        @csrf
+        <div>
+            <label class="block text-sm font-medium text-dark-oak mb-1">Nama</label>
+            <input type="text" name="name" value="{{ old('name') }}" class="w-full border border-sand rounded-xl px-4 py-2.5 focus:border-sage-green focus:outline-none focus:ring-2 focus:ring-sage-green/20" required>
+            @error('name')<p class="text-terracotta text-xs mt-1">{{ $message }}</p>@enderror
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-dark-oak mb-1">Email</label>
+            <input type="email" name="email" value="{{ old('email') }}" class="w-full border border-sand rounded-xl px-4 py-2.5 focus:border-sage-green focus:outline-none focus:ring-2 focus:ring-sage-green/20" required>
+            @error('email')<p class="text-terracotta text-xs mt-1">{{ $message }}</p>@enderror
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-dark-oak mb-1">Password</label>
+            <input type="password" name="password" class="w-full border border-sand rounded-xl px-4 py-2.5 focus:border-sage-green focus:outline-none focus:ring-2 focus:ring-sage-green/20" required>
+            @error('password')<p class="text-terracotta text-xs mt-1">{{ $message }}</p>@enderror
+        </div>
+        <div>
+            <label class="flex items-center gap-2 text-sm text-dark-oak">
+                <input type="checkbox" name="is_admin" value="1" class="rounded border-sand text-sage-green focus:ring-sage-green"> Admin
+            </label>
+        </div>
+        <div class="flex gap-3 pt-4">
+            <button type="submit" class="bg-sage-green text-white rounded-xl px-6 py-2.5 font-medium hover:brightness-110 transition-all">Simpan</button>
+            <a href="{{ route('admin.users') }}" class="border border-sand text-dark-oak rounded-xl px-6 py-2.5 font-medium">Batal</a>
+        </div>
+    </form>
+</div>
+@endsection

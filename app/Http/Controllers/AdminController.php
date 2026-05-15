@@ -2,6 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Article;
+use App\Models\ChatConversation;
+use App\Models\ChatMessage;
+use App\Models\Product;
+use App\Models\Setting;
+use App\Models\User;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class AdminController extends Controller
@@ -9,35 +18,20 @@ class AdminController extends Controller
     public function index(): View
     {
         $stats = [
-            'total_products' => 12,
-            'total_articles' => 6,
-            'total_categories' => 5,
+            'total_products' => Product::count(),
+            'total_articles' => Article::count(),
+            'total_categories' => Product::distinct('category')->count('category'),
             'monthly_orders' => 45,
         ];
 
-        $recentProducts = [
-            ['name'=>'Pink Romance','category'=>'Wisuda','status'=>'Aktif','image'=>'https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=100'],
-            ['name'=>'Cream Elegance','category'=>'Anniversary','status'=>'Aktif','image'=>'https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=100'],
-            ['name'=>'Garden Fresh','category'=>'Ulang Tahun','status'=>'Aktif','image'=>'https://images.unsplash.com/photo-1490750967868-88df5691cc45?w=100'],
-            ['name'=>'Terracotta Bloom','category'=>'Wisuda','status'=>'Draft','image'=>'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=100'],
-            ['name'=>'Lavender Dream','category'=>'Anniversary','status'=>'Aktif','image'=>'https://images.unsplash.com/photo-1508610048659-a06b669e3321?w=100'],
-        ];
+        $recentProducts = Product::latest()->take(5)->get();
 
         return view('admin.dashboard', compact('stats', 'recentProducts'));
     }
 
     public function products(): View
     {
-        $products = [
-            ['id'=>1,'name'=>'Pink Romance','slug'=>'pink-romance','category'=>'Wisuda','status'=>'Aktif','date'=>'15 April 2025','image'=>'https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=100'],
-            ['id'=>2,'name'=>'Cream Elegance','slug'=>'cream-elegance','category'=>'Anniversary','status'=>'Aktif','date'=>'14 April 2025','image'=>'https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=100'],
-            ['id'=>3,'name'=>'Garden Fresh','slug'=>'garden-fresh','category'=>'Ulang Tahun','status'=>'Aktif','date'=>'13 April 2025','image'=>'https://images.unsplash.com/photo-1490750967868-88df5691cc45?w=100'],
-            ['id'=>4,'name'=>'Terracotta Bloom','slug'=>'terracotta-bloom','category'=>'Wisuda','status'=>'Draft','date'=>'12 April 2025','image'=>'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=100'],
-            ['id'=>5,'name'=>'Lavender Dream','slug'=>'lavender-dream','category'=>'Anniversary','status'=>'Aktif','date'=>'11 April 2025','image'=>'https://images.unsplash.com/photo-1508610048659-a06b669e3321?w=100'],
-            ['id'=>6,'name'=>'Sunny Daisy','slug'=>'sunny-daisy','category'=>'Ulang Tahun','status'=>'Aktif','date'=>'10 April 2025','image'=>'https://images.unsplash.com/photo-1463936575829-25148e1db1b8?w=100'],
-            ['id'=>7,'name'=>'White Purity','slug'=>'white-purity','category'=>'Wedding','status'=>'Aktif','date'=>'9 April 2025','image'=>'https://images.unsplash.com/photo-1593698054589-22f60f85bced?w=100'],
-            ['id'=>8,'name'=>'Forest Sage','slug'=>'forest-sage','category'=>'Wisuda','status'=>'Aktif','date'=>'8 April 2025','image'=>'https://images.unsplash.com/photo-1420593248178-d88870618ca0?w=100'],
-        ];
+        $products = Product::latest()->get();
 
         return view('admin.products.index', compact('products'));
     }
@@ -47,13 +41,261 @@ class AdminController extends Controller
         return view('admin.products.create');
     }
 
+    public function productsStore(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'slug' => 'nullable|string|max:255|unique:products,slug',
+            'category' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'image' => 'nullable|string|max:500',
+            'badge' => 'nullable|string|max:255',
+            'status' => 'required|in:Aktif,Draft',
+        ]);
+
+        $data['slug'] = $data['slug'] ?: Str::slug($data['name']);
+
+        Product::create($data);
+
+        return redirect()->route('admin.products')->with('success', 'Produk berhasil ditambahkan.');
+    }
+
+    public function productsEdit(Product $product): View
+    {
+        return view('admin.products.edit', compact('product'));
+    }
+
+    public function productsUpdate(Request $request, Product $product): RedirectResponse
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'slug' => 'nullable|string|max:255|unique:products,slug,'.$product->id,
+            'category' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'image' => 'nullable|string|max:500',
+            'badge' => 'nullable|string|max:255',
+            'status' => 'required|in:Aktif,Draft',
+        ]);
+
+        $data['slug'] = $data['slug'] ?: Str::slug($data['name']);
+
+        $product->update($data);
+
+        return redirect()->route('admin.products')->with('success', 'Produk berhasil diperbarui.');
+    }
+
+    public function productsDestroy(Product $product): RedirectResponse
+    {
+        $product->delete();
+
+        return redirect()->route('admin.products')->with('success', 'Produk berhasil dihapus.');
+    }
+
     public function articles(): View
     {
-        return view('admin.articles.index');
+        $articles = Article::latest()->get();
+
+        return view('admin.articles.index', compact('articles'));
+    }
+
+    public function articlesCreate(): View
+    {
+        return view('admin.articles.create');
+    }
+
+    public function articlesStore(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'title' => 'required|string|max:255',
+            'slug' => 'nullable|string|max:255|unique:articles,slug',
+            'excerpt' => 'nullable|string',
+            'content' => 'nullable|string',
+            'category' => 'required|string|max:255',
+            'image' => 'nullable|string|max:500',
+            'date' => 'nullable|string|max:255',
+        ]);
+
+        $data['slug'] = $data['slug'] ?: Str::slug($data['title']);
+        $data['date'] = $data['date'] ?: now()->format('j F Y');
+
+        Article::create($data);
+
+        return redirect()->route('admin.articles')->with('success', 'Artikel berhasil ditambahkan.');
+    }
+
+    public function articlesEdit(Article $article): View
+    {
+        return view('admin.articles.edit', compact('article'));
+    }
+
+    public function articlesUpdate(Request $request, Article $article): RedirectResponse
+    {
+        $data = $request->validate([
+            'title' => 'required|string|max:255',
+            'slug' => 'nullable|string|max:255|unique:articles,slug,'.$article->id,
+            'excerpt' => 'nullable|string',
+            'content' => 'nullable|string',
+            'category' => 'required|string|max:255',
+            'image' => 'nullable|string|max:500',
+            'date' => 'nullable|string|max:255',
+        ]);
+
+        $data['slug'] = $data['slug'] ?: Str::slug($data['title']);
+
+        $article->update($data);
+
+        return redirect()->route('admin.articles')->with('success', 'Artikel berhasil diperbarui.');
+    }
+
+    public function articlesDestroy(Article $article): RedirectResponse
+    {
+        $article->delete();
+
+        return redirect()->route('admin.articles')->with('success', 'Artikel berhasil dihapus.');
+    }
+
+    public function chat(): View
+    {
+        $conversations = ChatConversation::withCount('messages')
+            ->where('status', 'active')
+            ->latest()
+            ->paginate(20);
+
+        return view('admin.chat.index', compact('conversations'));
+    }
+
+    public function chatShow(ChatConversation $conversation): View
+    {
+        $conversation->load('messages');
+
+        return view('admin.chat.show', compact('conversation'));
+    }
+
+    public function chatReply(Request $request, ChatConversation $conversation): RedirectResponse
+    {
+        $data = $request->validate([
+            'message' => 'required|string|max:1000',
+        ]);
+
+        ChatMessage::create([
+            'chat_conversation_id' => $conversation->id,
+            'sender' => 'admin',
+            'message' => $data['message'],
+        ]);
+
+        return redirect()->route('admin.chat.show', $conversation)
+            ->with('success', 'Pesan terkirim.');
+    }
+
+    public function chatArchive(): View
+    {
+        $conversations = ChatConversation::withCount('messages')
+            ->where('status', 'closed')
+            ->latest()
+            ->paginate(20);
+
+        return view('admin.chat.archive', compact('conversations'));
+    }
+
+    public function chatArchiveShow(ChatConversation $conversation): View
+    {
+        abort_if($conversation->status !== 'closed', 404);
+
+        $conversation->load('messages');
+
+        return view('admin.chat.archive-show', compact('conversation'));
+    }
+
+    public function chatClose(ChatConversation $conversation): RedirectResponse
+    {
+        $conversation->update(['status' => 'closed']);
+
+        return redirect()->route('admin.chat')->with('success', 'Percakapan ditutup.');
     }
 
     public function settings(): View
     {
-        return view('admin.settings');
+        $settings = Setting::pluck('value', 'key')->toArray();
+
+        return view('admin.settings', compact('settings'));
+    }
+
+    public function settingsUpdate(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'store_name' => 'required|string|max:255',
+            'whatsapp' => 'required|string|max:255',
+            'address' => 'nullable|string',
+            'instagram' => 'nullable|string|max:255',
+            'hours' => 'nullable|string|max:255',
+        ]);
+
+        foreach ($data as $key => $value) {
+            Setting::updateOrCreate(['key' => $key], ['value' => $value]);
+        }
+
+        return redirect()->route('admin.settings')->with('success', 'Pengaturan berhasil disimpan.');
+    }
+
+    public function users(): View
+    {
+        $users = User::latest()->get();
+
+        return view('admin.users.index', compact('users'));
+    }
+
+    public function usersCreate(): View
+    {
+        return view('admin.users.create');
+    }
+
+    public function usersStore(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users',
+            'password' => 'required|string|min:6',
+            'is_admin' => 'boolean',
+        ]);
+
+        $data['is_admin'] = $request->boolean('is_admin');
+        User::create($data);
+
+        return redirect()->route('admin.users')->with('success', 'Pengguna berhasil ditambahkan.');
+    }
+
+    public function usersEdit(User $user): View
+    {
+        return view('admin.users.edit', compact('user'));
+    }
+
+    public function usersUpdate(Request $request, User $user): RedirectResponse
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email,'.$user->id,
+            'password' => 'nullable|string|min:6',
+            'is_admin' => 'boolean',
+        ]);
+
+        $data['is_admin'] = $request->boolean('is_admin');
+        if (empty($data['password'])) {
+            unset($data['password']);
+        }
+
+        $user->update($data);
+
+        return redirect()->route('admin.users')->with('success', 'Pengguna berhasil diperbarui.');
+    }
+
+    public function usersDestroy(User $user): RedirectResponse
+    {
+        if ($user->id === auth()->id()) {
+            return back()->with('error', 'Tidak bisa menghapus akun sendiri.');
+        }
+
+        $user->delete();
+
+        return redirect()->route('admin.users')->with('success', 'Pengguna berhasil dihapus.');
     }
 }

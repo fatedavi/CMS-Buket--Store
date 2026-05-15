@@ -29,17 +29,75 @@
     <div class="max-w-7xl mx-auto px-4">
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             @foreach($products as $product)
-            <a href="{{ route('catalog.show', $product['slug']) }}" class="bg-white border border-amber-100 rounded-xl overflow-hidden group">
-                <div class="relative aspect-[4/3]">
-                    <img src="{{ $product['image'] }}" alt="{{ $product['name'] }}" class="w-full h-full object-cover" loading="lazy">
-                    @if($product['badge'])<span class="absolute top-2 left-2 bg-sage-green text-white text-xs rounded-lg px-2 py-0.5">{{ $product['badge'] }}</span>@endif
+            <div x-data="{ openModal: false }">
+                <!-- Card -->
+                <div class="text-left w-full bg-white border border-amber-100 rounded-xl overflow-hidden group transition-all hover:shadow-md hover:-translate-y-1 block">
+                    <div class="relative aspect-[4/3] overflow-hidden">
+                        <img src="{{ $product['image'] }}" alt="{{ $product['name'] }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
+                        @if($product['badge'])<span class="absolute top-2 left-2 bg-sage-green text-white text-xs rounded-lg px-2 py-0.5">{{ $product['badge'] }}</span>@endif
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-medium text-dark-oak text-sm mb-1 line-clamp-1">{{ $product['name'] }}</h3>
+                        <p class="text-xs text-warm-gray mb-3">{{ $product['category'] }}</p>
+                        <button @click="openModal = true" class="w-full bg-sage-green text-white rounded-lg py-2 text-xs text-center font-medium transition-colors hover:brightness-110">Lihat Detail</button>
+                    </div>
                 </div>
-                <div class="p-4">
-                    <h3 class="font-medium text-dark-oak text-sm mb-1">{{ $product['name'] }}</h3>
-                    <p class="text-xs text-warm-gray mb-3">{{ $product['category'] }}</p>
-                    <div class="bg-sage-green text-white rounded-lg py-2 text-xs text-center">Pesan via WA</div>
+
+                <!-- Floating Modal -->
+                <div x-show="openModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6" style="display: none;">
+                    <!-- Backdrop -->
+                    <div x-show="openModal" 
+                         x-transition:enter="transition ease-out duration-300"
+                         x-transition:enter-start="opacity-0"
+                         x-transition:enter-end="opacity-100"
+                         x-transition:leave="transition ease-in duration-200"
+                         x-transition:leave-start="opacity-100"
+                         x-transition:leave-end="opacity-0"
+                         @click="openModal = false"
+                         class="absolute inset-0 bg-dark-oak/80 backdrop-blur-sm"></div>
+
+                    <!-- Modal Content -->
+                    <div x-show="openModal" 
+                         x-transition:enter="transition ease-out duration-300"
+                         x-transition:enter-start="opacity-0 translate-y-8 sm:scale-95"
+                         x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                         x-transition:leave="transition ease-in duration-200"
+                         x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                         x-transition:leave-end="opacity-0 translate-y-8 sm:scale-95"
+                         class="relative w-full max-w-3xl bg-white rounded-2xl overflow-hidden shadow-2xl flex flex-col md:flex-row max-h-[90vh]">
+                        
+                        <button @click="openModal = false" class="absolute top-4 right-4 bg-white/80 backdrop-blur text-dark-oak hover:bg-dark-oak hover:text-white transition-colors z-10 w-8 h-8 flex justify-center items-center rounded-full text-xl leading-none">&times;</button>
+                        
+                        <!-- Image Section -->
+                        <div class="w-full md:w-1/2 h-64 md:h-auto bg-cream relative">
+                            <img src="{{ $product['image'] }}" alt="{{ $product['name'] }}" class="w-full h-full object-cover">
+                            @if($product['badge'])
+                            <span class="absolute top-4 left-4 bg-sage-green text-white text-xs rounded-lg px-3 py-1 shadow-sm">{{ $product['badge'] }}</span>
+                            @endif
+                        </div>
+                        
+                        <!-- Info Section -->
+                        <div class="w-full md:w-1/2 p-6 md:p-8 flex flex-col overflow-y-auto">
+                            <p class="text-terracotta text-sm uppercase tracking-wide font-medium mb-2">{{ $product['category'] }}</p>
+                            <h2 class="font-playfair text-3xl text-dark-oak mb-4">{{ $product['name'] }}</h2>
+                            
+                            <div class="w-12 h-px bg-amber-200 mb-4"></div>
+                            
+                            <p class="text-warm-gray text-sm leading-relaxed mb-8 flex-1">
+                                Rangkaian bunga segar dan rapi yang disusun secara eksklusif. Sangat cocok diberikan sebagai hadiah pada momen spesial. Desain dan paduan warnanya memberikan kesan yang elegan dan manis.
+                            </p>
+                            
+                            <div class="mt-auto flex flex-col gap-3">
+                                <a href="https://wa.me/6285649150049?text={{ urlencode('Halo! Saya tertarik untuk memesan buket: ' . $product['name']) }}" target="_blank" class="w-full bg-sage-green hover:brightness-110 text-white rounded-full py-3.5 font-medium flex items-center justify-center gap-2 transition-all">
+                                    <span>Pesan via WhatsApp</span>
+                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.298.144.347.491 1.2.534 1.287.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.354.101.174.449.741.964 1.201.662.591 1.221.774 1.394.86s.274.072.376-.043c.101-.116.433-.506.549-.68.116-.173.231-.145.39-.087s1.011.477 1.184.564.289.13.332.202c.045.072.045.419-.099.824z"/></svg>
+                                </a>
+                                <button @click="openModal = false" class="w-full bg-transparent border border-amber-200 text-dark-oak hover:bg-cream rounded-full py-3 font-medium transition-all">Tutup Katalog</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </a>
+            </div>
             @endforeach
         </div>
     </div>

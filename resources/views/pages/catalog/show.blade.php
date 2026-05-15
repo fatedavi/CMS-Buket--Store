@@ -39,9 +39,9 @@
                     Tanya & Pesan via WhatsApp
                 </a>
                 <div class="mt-6 space-y-2 text-sm text-warm-gray">
-                    <p>🌿 Bunga segar, dirangkai saat hari pemesanan</p>
-                    <p>🚚 Pengiriman area Sidoarjo & sekitarnya</p>
-                    <p>💬 Konsultasi gratis sebelum pesan</p>
+                    <p><x-icons.leaf class="w-4 h-4 inline-block align-middle mr-1 text-sage-green" /> Bunga segar, dirangkai saat hari pemesanan</p>
+                    <p><x-icons.truck class="w-4 h-4 inline-block align-middle mr-1 text-sage-green" /> Pengiriman area Sidoarjo & sekitarnya</p>
+                    <p><x-icons.chat class="w-4 h-4 inline-block align-middle mr-1 text-sage-green" /> Konsultasi gratis sebelum pesan</p>
                 </div>
             </div>
         </div>

@@ -3,7 +3,7 @@
         <div class="flex justify-between items-center h-16">
             <div class="flex-shrink-0">
                 <a href="{{ route('home') }}" class="font-playfair text-2xl text-dark-oak hover:text-sage-green transition-colors">
-                    🌸 [Nama Toko]
+                    <x-icons.cherry-blossom class="w-6 h-6 inline-block align-middle mr-1" /> {{ setting('store_name', '[Nama Toko]') }}
                 </a>
             </div>
             <div class="hidden md:flex space-x-8 items-center">
@@ -12,8 +12,20 @@
                 <a href="{{ route('blog.index') }}" class="text-warm-gray hover:text-sage-green text-sm transition-colors {{ request()->routeIs('blog.*') ? 'text-sage-green font-medium' : '' }}">Blog</a>
                 <a href="{{ route('contact') }}" class="text-warm-gray hover:text-sage-green text-sm transition-colors {{ request()->routeIs('contact') ? 'text-sage-green font-medium' : '' }}">Kontak</a>
             </div>
-            <div class="hidden md:block">
-                <a href="https://wa.me/6285649150049" target="_blank" class="bg-sage-green text-white rounded-full px-4 py-2 text-sm font-medium hover:brightness-110 transition-all">Pesan via WA</a>
+            <div class="hidden md:flex items-center gap-3">
+                @auth
+                    @if(auth()->user()->is_admin)
+                        <a href="{{ route('admin.index') }}" class="text-warm-gray hover:text-sage-green text-sm transition-colors">Admin</a>
+                    @endif
+                    <form action="{{ route('logout') }}" method="POST" class="inline">
+                        @csrf
+                        <button type="submit" class="text-warm-gray hover:text-sage-green text-sm transition-colors">Keluar</button>
+                    </form>
+                @else
+                    <a href="{{ route('login') }}" class="text-warm-gray hover:text-sage-green text-sm transition-colors">Masuk</a>
+                    <a href="{{ route('register') }}" class="bg-sage-green text-white rounded-full px-4 py-2 text-sm font-medium hover:brightness-110 transition-all">Daftar</a>
+                @endauth
+                <a href="https://wa.me/{{ setting('whatsapp_link', '6285649150049') }}" target="_blank" class="bg-sage-green text-white rounded-full px-4 py-2 text-sm font-medium hover:brightness-110 transition-all">Pesan via WA</a>
             </div>
             <div class="md:hidden">
                 <button @click="mobileMenuOpen = !mobileMenuOpen" class="text-dark-oak p-2">
@@ -30,7 +42,19 @@
                 <a href="{{ route('catalog.index') }}" class="text-warm-gray hover:text-sage-green text-sm">Katalog</a>
                 <a href="{{ route('blog.index') }}" class="text-warm-gray hover:text-sage-green text-sm">Blog</a>
                 <a href="{{ route('contact') }}" class="text-warm-gray hover:text-sage-green text-sm">Kontak</a>
-                <a href="https://wa.me/6285649150049" target="_blank" class="bg-sage-green text-white rounded-full px-4 py-2 text-sm text-center">Pesan via WA</a>
+                @auth
+                    @if(auth()->user()->is_admin)
+                        <a href="{{ route('admin.index') }}" class="text-warm-gray hover:text-sage-green text-sm">Admin</a>
+                    @endif
+                    <form action="{{ route('logout') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="text-warm-gray hover:text-sage-green text-sm">Keluar</button>
+                    </form>
+                @else
+                    <a href="{{ route('login') }}" class="text-warm-gray hover:text-sage-green text-sm">Masuk</a>
+                    <a href="{{ route('register') }}" class="bg-sage-green text-white rounded-full px-4 py-2 text-sm text-center">Daftar</a>
+                @endauth
+                <a href="https://wa.me/{{ setting('whatsapp_link', '6285649150049') }}" target="_blank" class="bg-sage-green text-white rounded-full px-4 py-2 text-sm text-center">Pesan via WA</a>
             </div>
         </div>
     </div>

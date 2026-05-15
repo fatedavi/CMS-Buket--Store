@@ -38,12 +38,12 @@
         <tbody>
             @foreach($recentProducts as $product)
             <tr class="border-t border-amber-100 hover:bg-[#faf8f4]">
-                <td class="px-4 py-3"><img src="{{ $product['image'] }}" class="w-10 h-10 rounded object-cover"></td>
-                <td class="px-4 py-3 text-sm text-dark-oak">{{ $product['name'] }}</td>
-                <td class="px-4 py-3 text-sm text-warm-gray">{{ $product['category'] }}</td>
+                <td class="px-4 py-3"><img src="{{ $product->image }}" class="w-10 h-10 rounded object-cover"></td>
+                <td class="px-4 py-3 text-sm text-dark-oak">{{ $product->name }}</td>
+                <td class="px-4 py-3 text-sm text-warm-gray">{{ $product->category }}</td>
                 <td class="px-4 py-3">
-                    <span class="px-2 py-1 rounded text-xs {{ $product['status'] === 'Aktif' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' }}">
-                        {{ $product['status'] }}
+                    <span class="px-2 py-1 rounded text-xs {{ $product->status === 'Aktif' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' }}">
+                        {{ $product->status }}
                     </span>
                 </td>
             </tr>

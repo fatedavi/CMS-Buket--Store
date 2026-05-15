@@ -18,7 +18,7 @@
                 
                 <div class="space-y-4">
                     <div class="flex items-start gap-3">
-                        <span class="text-xl">📍</span>
+                        <x-icons.map-pin class="w-6 h-6 flex-shrink-0 text-sage-green" />
                         <div>
                             <p class="font-medium text-dark-oak">Alamat</p>
                             <p class="text-warm-gray text-sm">{{ $contact['alamat'] }}</p>
@@ -26,7 +26,7 @@
                     </div>
                     
                     <div class="flex items-start gap-3">
-                        <span class="text-xl">📱</span>
+                        <x-icons.phone class="w-6 h-6 flex-shrink-0 text-sage-green" />
                         <div>
                             <p class="font-medium text-dark-oak">WhatsApp</p>
                             <a href="https://wa.me/{{ $contact['nomor_wa'] }}" class="text-sage-green text-sm hover:underline">{{ $contact['nomor_wa'] }}</a>
@@ -34,7 +34,7 @@
                     </div>
                     
                     <div class="flex items-start gap-3">
-                        <span class="text-xl">🕐</span>
+                        <x-icons.clock class="w-6 h-6 flex-shrink-0 text-sage-green" />
                         <div>
                             <p class="font-medium text-dark-oak">Jam Buka</p>
                             <p class="text-warm-gray text-sm">{{ $contact['jam_buka'] }}</p>
@@ -42,7 +42,7 @@
                     </div>
                     
                     <div class="flex items-start gap-3">
-                        <span class="text-xl">📸</span>
+                        <x-icons.camera class="w-6 h-6 flex-shrink-0 text-sage-green" />
                         <div>
                             <p class="font-medium text-dark-oak">Instagram</p>
                             <p class="text-warm-gray text-sm">{{ $contact['instagram'] }}</p>
