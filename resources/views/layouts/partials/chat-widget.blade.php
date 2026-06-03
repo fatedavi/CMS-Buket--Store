@@ -42,7 +42,7 @@
                     <p class="text-[11px] text-white/70 mt-0.5" x-text="onlineStatus"></p>
                 </div>
             </div>
-            <button @click="open = false" class="text-white/60 hover:text-white transition-colors bg-white/10 hover:bg-white/20 rounded-full p-1.5">
+            <button @click="open = false; stopEcho()" class="text-white/60 hover:text-white transition-colors bg-white/10 hover:bg-white/20 rounded-full p-1.5">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>
@@ -82,12 +82,6 @@
                         </div>
                     </div>
                 </template>
-                <div x-show="loading" class="flex gap-2 max-w-[88%]">
-                    <div class="w-7 h-7 bg-sage-green rounded-full flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold mt-1">CS</div>
-                    <div class="bg-white px-4 py-3 rounded-2xl rounded-tl-md shadow-sm border border-gray-100">
-                        <div class="flex gap-1"><span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay:0s"></span><span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay:0.2s"></span><span class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay:0.4s"></span></div>
-                    </div>
-                </div>
             </template>
         </div>
 
@@ -145,14 +139,15 @@ function chatWidget() {
         messages: [],
         newMessage: '',
         loading: false,
-        sessionId: localStorage.getItem('chat_session_id') || '',
+        isLoggedIn: {{ auth()->check() ? 'true' : 'false' }},
+        sessionId: {!! auth()->check() ? "'user_" . auth()->id() . "'" : "null" !!} || localStorage.getItem('chat_session_id') || '',
         selectedImage: null,
         selectedImageUrl: null,
         previewImage: null,
-        isLoggedIn: {{ auth()->check() ? 'true' : 'false' }},
         onlineStatus: 'Membalas dalam beberapa menit',
         closed: false,
         errorMsg: '',
+        echoChannel: null,
 
         initChat() {
             if (!this.sessionId) {
@@ -160,6 +155,29 @@ function chatWidget() {
                 localStorage.setItem('chat_session_id', this.sessionId);
             }
             this.loadMessages();
+            this.listenEcho();
+        },
+
+        listenEcho() {
+            if (this.echoChannel) return;
+            if (!window.Echo) return;
+            this.echoChannel = window.Echo.private('chat.' + this.sessionId)
+                .listen('MessageSent', (e) => {
+                    if (!this.messages.find(m => m.id === e.message.id)) {
+                        this.messages.push(e.message);
+                        this.$nextTick(() => this.scrollDown());
+                    }
+                })
+                .listen('ChatClosed', () => {
+                    this.closed = true;
+                });
+        },
+
+        stopEcho() {
+            if (this.echoChannel) {
+                window.Echo.leave('chat.' + this.sessionId);
+                this.echoChannel = null;
+            }
         },
 
         async loadMessages() {
@@ -208,11 +226,15 @@ function chatWidget() {
         },
 
         startNewSession() {
+            this.stopEcho();
             this.closed = false;
             this.messages = [];
-            this.sessionId = 'chat_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9);
-            localStorage.setItem('chat_session_id', this.sessionId);
+            if (!this.isLoggedIn) {
+                this.sessionId = 'chat_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9);
+                localStorage.setItem('chat_session_id', this.sessionId);
+            }
             this.$nextTick(() => this.scrollDown());
+            this.listenEcho();
         },
 
         uploadImage() {

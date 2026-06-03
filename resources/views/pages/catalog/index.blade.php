@@ -11,7 +11,8 @@
     </div>
 </section>
 
-<section class="py-8 bg-linen border-b border-amber-100" x-data="{ activeCategory: 'Semua' }">
+<div x-data="{ activeCategory: 'Semua' }">
+<section class="py-8 bg-linen border-b border-amber-100">
     <div class="max-w-7xl mx-auto px-4">
         <div class="flex flex-wrap gap-2">
             @foreach($categories as $cat)
@@ -29,11 +30,12 @@
     <div class="max-w-7xl mx-auto px-4">
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             @foreach($products as $product)
-            <div x-data="{ openModal: false }">
+            <div x-show="activeCategory === 'Semua' || activeCategory === '{{ $product['category'] }}'"
+                 x-data="{ openModal: false }">
                 <!-- Card -->
                 <div class="text-left w-full bg-white border border-amber-100 rounded-xl overflow-hidden group transition-all hover:shadow-md hover:-translate-y-1 block">
                     <div class="relative aspect-[4/3] overflow-hidden">
-                        <img src="{{ $product['image'] }}" alt="{{ $product['name'] }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
+                        <img src="{{ $product->image_url }}" alt="{{ $product['name'] }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy">
                         @if($product['badge'])<span class="absolute top-2 left-2 bg-sage-green text-white text-xs rounded-lg px-2 py-0.5">{{ $product['badge'] }}</span>@endif
                     </div>
                     <div class="p-4">
@@ -70,7 +72,7 @@
                         
                         <!-- Image Section -->
                         <div class="w-full md:w-1/2 h-64 md:h-auto bg-cream relative">
-                            <img src="{{ $product['image'] }}" alt="{{ $product['name'] }}" class="w-full h-full object-cover">
+                            <img src="{{ $product->image_url }}" alt="{{ $product['name'] }}" class="w-full h-full object-cover">
                             @if($product['badge'])
                             <span class="absolute top-4 left-4 bg-sage-green text-white text-xs rounded-lg px-3 py-1 shadow-sm">{{ $product['badge'] }}</span>
                             @endif
@@ -102,4 +104,5 @@
         </div>
     </div>
 </section>
+</div>
 @endsection

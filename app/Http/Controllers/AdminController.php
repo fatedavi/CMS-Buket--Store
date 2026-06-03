@@ -2,14 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\ChatClosed;
+use App\Events\MessageSent;
 use App\Models\Article;
 use App\Models\ChatConversation;
 use App\Models\ChatMessage;
 use App\Models\Product;
 use App\Models\Setting;
+use App\Models\Tip;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -44,16 +49,23 @@ class AdminController extends Controller
     public function productsStore(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:products,slug',
-            'category' => 'required|string|max:255',
+            'name'        => 'required|string|max:255',
+            'slug'        => 'nullable|string|max:255|unique:products,slug',
+            'category'    => 'required|string|max:255',
             'description' => 'nullable|string',
-            'image' => 'nullable|string|max:500',
-            'badge' => 'nullable|string|max:255',
-            'status' => 'required|in:Aktif,Draft',
+            'image'       => 'nullable|image|max:2048',
+            'badge'       => 'nullable|string|max:255',
+            'status'      => 'required|in:Aktif,Draft',
         ]);
 
         $data['slug'] = $data['slug'] ?: Str::slug($data['name']);
+
+        // Handle file upload
+        if ($request->hasFile('image')) {
+            $data['image'] = $request->file('image')->store('products', 'public');
+        } else {
+            unset($data['image']);
+        }
 
         Product::create($data);
 
@@ -68,16 +80,36 @@ class AdminController extends Controller
     public function productsUpdate(Request $request, Product $product): RedirectResponse
     {
         $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'slug' => 'nullable|string|max:255|unique:products,slug,'.$product->id,
-            'category' => 'required|string|max:255',
+            'name'        => 'required|string|max:255',
+            'slug'        => 'nullable|string|max:255|unique:products,slug,'.$product->id,
+            'category'    => 'required|string|max:255',
             'description' => 'nullable|string',
-            'image' => 'nullable|string|max:500',
-            'badge' => 'nullable|string|max:255',
-            'status' => 'required|in:Aktif,Draft',
+            'image'       => 'nullable|image|max:2048',
+            'badge'       => 'nullable|string|max:255',
+            'status'      => 'required|in:Aktif,Draft',
         ]);
 
         $data['slug'] = $data['slug'] ?: Str::slug($data['name']);
+
+        // Hapus gambar lama kalau centang remove
+        if ($request->boolean('remove_image') && $product->image) {
+            if (!str_starts_with($product->image, 'http')) {
+                Storage::disk('public')->delete($product->image);
+            }
+            $data['image'] = null;
+        }
+
+        // Upload gambar baru (menggantikan lama jika ada)
+        if ($request->hasFile('image')) {
+            // Hapus gambar lama sebelum upload baru
+            if ($product->image && !str_starts_with($product->image, 'http')) {
+                Storage::disk('public')->delete($product->image);
+            }
+            $data['image'] = $request->file('image')->store('products', 'public');
+        } else {
+            // Tidak ada upload baru — jangan ubah image
+            unset($data['image']);
+        }
 
         $product->update($data);
 
@@ -171,17 +203,27 @@ class AdminController extends Controller
         return view('admin.chat.show', compact('conversation'));
     }
 
-    public function chatReply(Request $request, ChatConversation $conversation): RedirectResponse
+    public function chatReply(Request $request, ChatConversation $conversation): RedirectResponse|JsonResponse
     {
         $data = $request->validate([
             'message' => 'required|string|max:1000',
         ]);
 
-        ChatMessage::create([
+        $msg = ChatMessage::create([
             'chat_conversation_id' => $conversation->id,
             'sender' => 'admin',
             'message' => $data['message'],
         ]);
+
+        broadcast(new MessageSent($msg, $conversation));
+
+        // Kalau dipanggil via AJAX (Accept: application/json), return JSON
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $msg,
+            ]);
+        }
 
         return redirect()->route('admin.chat.show', $conversation)
             ->with('success', 'Pesan terkirim.');
@@ -210,7 +252,69 @@ class AdminController extends Controller
     {
         $conversation->update(['status' => 'closed']);
 
+        broadcast(new ChatClosed($conversation));
+
         return redirect()->route('admin.chat')->with('success', 'Percakapan ditutup.');
+    }
+
+    public function tips(): View
+    {
+        $tips = Tip::orderBy('order')->get();
+
+        return view('admin.tips.index', compact('tips'));
+    }
+
+    public function tipsCreate(): View
+    {
+        return view('admin.tips.create');
+    }
+
+    public function tipsStore(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
+            'icon' => 'nullable|string|max:50|in:' . implode(',', Tip::iconOptions()),
+            'order' => 'nullable|integer|min:0',
+            'is_active' => 'boolean',
+        ]);
+
+        $data['is_active'] = $request->boolean('is_active');
+        $data['order'] = $data['order'] ?? 0;
+
+        Tip::create($data);
+
+        return redirect()->route('admin.tips')->with('success', 'Tips berhasil ditambahkan.');
+    }
+
+    public function tipsEdit(Tip $tip): View
+    {
+        return view('admin.tips.edit', compact('tip'));
+    }
+
+    public function tipsUpdate(Request $request, Tip $tip): RedirectResponse
+    {
+        $data = $request->validate([
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
+            'icon' => 'nullable|string|max:50|in:' . implode(',', Tip::iconOptions()),
+            'order' => 'nullable|integer|min:0',
+            'is_active' => 'boolean',
+        ]);
+
+        $data['is_active'] = $request->boolean('is_active');
+        $data['order'] = $data['order'] ?? 0;
+
+        $tip->update($data);
+
+        return redirect()->route('admin.tips')->with('success', 'Tips berhasil diperbarui.');
+    }
+
+    public function tipsDestroy(Tip $tip): RedirectResponse
+    {
+        $tip->delete();
+
+        return redirect()->route('admin.tips')->with('success', 'Tips berhasil dihapus.');
     }
 
     public function settings(): View

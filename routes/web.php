@@ -49,6 +49,12 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'is_admin'])->group
     Route::get('/chat/{conversation}', [AdminController::class, 'chatShow'])->name('chat.show');
     Route::post('/chat/{conversation}/reply', [AdminController::class, 'chatReply'])->name('chat.reply');
     Route::post('/chat/{conversation}/close', [AdminController::class, 'chatClose'])->name('chat.close');
+    Route::get('/tips', [AdminController::class, 'tips'])->name('tips');
+    Route::get('/tips/baru', [AdminController::class, 'tipsCreate'])->name('tips.create');
+    Route::post('/tips', [AdminController::class, 'tipsStore'])->name('tips.store');
+    Route::get('/tips/{tip}/edit', [AdminController::class, 'tipsEdit'])->name('tips.edit');
+    Route::put('/tips/{tip}', [AdminController::class, 'tipsUpdate'])->name('tips.update');
+    Route::delete('/tips/{tip}', [AdminController::class, 'tipsDestroy'])->name('tips.destroy');
     Route::get('/pengaturan', [AdminController::class, 'settings'])->name('settings');
     Route::post('/pengaturan', [AdminController::class, 'settingsUpdate'])->name('settings.update');
     Route::get('/pengguna', [AdminController::class, 'users'])->name('users');

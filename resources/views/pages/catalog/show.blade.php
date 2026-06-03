@@ -10,12 +10,12 @@
 <section class="py-8 bg-linen">
     <div class="max-w-7xl mx-auto px-4">
         <div class="grid md:grid-cols-2 gap-8">
-            <div x-data="{ active: 0 }">
+            <div x-data="{ active: 0, images: {{ json_encode($product->images_url) }} }">
                 <div class="aspect-square rounded-2xl overflow-hidden border border-amber-100 mb-4">
-                    <img :src="$product['images'][active]" class="w-full h-full object-cover" :alt="$product['name']">
+                    <img :src="images[active]" class="w-full h-full object-cover" :alt="'{{ $product['name'] }}'">
                 </div>
                 <div class="flex gap-2">
-                    @foreach($product['images'] as $idx => $img)
+                    @foreach($product->images_url as $idx => $img)
                     <button @click="active = {{ $idx }}" class="w-20 h-20 rounded-xl overflow-hidden border-2" :class="active === {{ $idx }} ? 'border-sage-green' : 'border-transparent'">
                         <img src="{{ $img }}" class="w-full h-full object-cover">
                     </button>
@@ -35,7 +35,7 @@
                     <span class="bg-cream text-warm-gray rounded-full px-3 py-1 text-xs">{{ $tag }}</span>
                     @endforeach
                 </div>
-                <a href="https://wa.me/{{ $product['whatsapp'] }}?text=Halo, saya tertarik dengan {{ $product['name'] }}. Apakah tersedia?" class="block w-full bg-sage-green text-white rounded-2xl py-4 text-center font-medium hover:brightness-110 transition-all">
+                <a href="https://wa.me/6285649150049?text=Halo, saya tertarik dengan {{ $product['name'] }}. Apakah tersedia?" class="block w-full bg-sage-green text-white rounded-2xl py-4 text-center font-medium hover:brightness-110 transition-all">
                     Tanya & Pesan via WhatsApp
                 </a>
                 <div class="mt-6 space-y-2 text-sm text-warm-gray">
@@ -55,7 +55,7 @@
             @foreach($relatedProducts as $product)
             <a href="{{ route('catalog.show', $product['slug']) }}" class="bg-white border border-amber-100 rounded-xl overflow-hidden">
                 <div class="aspect-[4/3]">
-                    <img src="{{ $product['image'] }}" alt="{{ $product['name'] }}" class="w-full h-full object-cover">
+                    <img src="{{ $product->image_url }}" alt="{{ $product['name'] }}" class="w-full h-full object-cover">
                 </div>
                 <div class="p-3">
                     <h3 class="font-medium text-dark-oak text-sm">{{ $product['name'] }}</h3>

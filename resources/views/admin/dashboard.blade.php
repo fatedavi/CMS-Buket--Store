@@ -38,7 +38,10 @@
         <tbody>
             @foreach($recentProducts as $product)
             <tr class="border-t border-amber-100 hover:bg-[#faf8f4]">
-                <td class="px-4 py-3"><img src="{{ $product->image }}" class="w-10 h-10 rounded object-cover"></td>
+                <td class="px-4 py-3">
+                    @php $imgSrc = $product->image ? (str_starts_with($product->image, 'http') ? $product->image : Storage::url($product->image)) : null; @endphp
+                    @if($imgSrc)<img src="{{ $imgSrc }}" class="w-10 h-10 rounded object-cover">@else<div class="w-10 h-10 rounded bg-cream"></div>@endif
+                </td>
                 <td class="px-4 py-3 text-sm text-dark-oak">{{ $product->name }}</td>
                 <td class="px-4 py-3 text-sm text-warm-gray">{{ $product->category }}</td>
                 <td class="px-4 py-3">

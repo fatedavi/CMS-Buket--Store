@@ -120,10 +120,10 @@
                 @for($i = 0; $i < 3; $i++)
                 <div class="w-full flex-shrink-0">
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        @foreach(array_slice($featuredProducts, $i * 3, 3) as $product)
+                        @foreach($featuredProducts->slice($i * 3, 3) as $product)
                         <a href="{{ route('catalog.show', $product['slug']) }}" class="group bg-white border border-amber-100 rounded-xl overflow-hidden hover:shadow-xl hover:shadow-amber-100/50 hover:-translate-y-1 transition-all duration-500">
                             <div class="relative aspect-[4/3] overflow-hidden">
-                                <img src="{{ $product['image'] }}" alt="{{ $product['name'] }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                                <img src="{{ $product->image_url }}" alt="{{ $product['name'] }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
                                 @if($product['badge'])<span class="absolute top-3 left-3 bg-sage-green text-white text-xs rounded-lg px-2.5 py-1 font-medium">{{ $product['badge'] }}</span>@endif
                                 <div class="absolute inset-0 bg-gradient-to-t from-dark-oak/0 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                             </div>
@@ -171,59 +171,38 @@
     </div>
 </section>
 
-{{-- TESTIMONIAL --}}
+{{-- TIPS & FUNFACT --}}
 <section class="relative py-16 md:py-20 bg-linen overflow-hidden">
-    <div class="absolute top-1/2 left-0 w-80 h-80 bg-sage-green/5 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl"></div>
+    <div class="absolute top-0 right-0 w-96 h-96 bg-sage-green/5 rounded-full blur-3xl"></div>
+    <div class="absolute bottom-0 left-0 w-72 h-72 bg-blush/5 rounded-full blur-3xl"></div>
 
     <div class="relative max-w-7xl mx-auto px-4">
         <div class="text-center mb-12" data-aos="fade-up">
-            <span class="text-xs uppercase tracking-[0.2em] text-terracotta font-medium">Kata Mereka</span>
-            <h2 class="font-playfair text-3xl md:text-4xl text-dark-oak mt-3">Pelanggan <span class="italic text-sage-green">Puas</span> Kami</h2>
+            <span class="text-xs uppercase tracking-[0.2em] text-terracotta font-medium">Tips & Funfact</span>
+            <h2 class="font-playfair text-3xl md:text-4xl text-dark-oak mt-3">Tips Memilih <span class="italic text-sage-green">Produk</span></h2>
+            <p class="text-warm-gray text-sm mt-3 max-w-md mx-auto">Panduan dan fakta menarik seputar buket bunga untuk membantu Anda memilih</p>
         </div>
 
+        @if($tips->count())
         <div class="flex flex-col gap-8 md:gap-12 max-w-4xl mx-auto">
-            <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-amber-100/50 w-full md:w-4/5 self-start" data-aos="fade-right">
-                <div class="flex items-center gap-4 mb-4">
-                    <div class="w-12 h-12 bg-sage-green/15 rounded-full flex items-center justify-center text-sage-green font-bold text-lg">A</div>
-                    <div>
-                        <h4 class="font-medium text-dark-oak">Amanda</h4>
-                        <div class="flex text-amber-400 text-sm">★★★★★</div>
+            @foreach($tips as $tip)
+            <div class="bg-white p-6 md:p-8 rounded-2xl border-2 border-black/20 hover:border-black/50 transition-all w-full md:w-4/5 {{ $loop->even ? 'self-end md:self-end' : 'self-start' }}"
+                 data-aos="{{ $loop->even ? 'fade-left' : 'fade-right' }}" data-aos-delay="{{ $loop->iteration * 80 }}">
+                <div class="flex items-center gap-4 mb-3">
+                    <div class="w-12 h-12 rounded-full flex items-center justify-center{{ $loop->even ? ' bg-terracotta/10' : ' bg-sage-green/10' }}">
+                        <x-icons.tip :icon="$tip->icon ?? 'lightbulb'" class="w-5 h-5 text-sage-green" />
                     </div>
-                    <span class="ml-auto text-5xl text-sage-green/10 font-serif leading-none">"</span>
+                    <h3 class="font-playfair text-lg text-dark-oak">{{ $tip->title }}</h3>
                 </div>
-                <p class="text-warm-gray text-sm leading-relaxed relative z-10">
-                    "Buketnya cantik banget! Sama persis dengan yang digambar, bunganya juga segar tahan sampai beberapa hari. Adminnya ramah banget bisa custom warna pita. Next bakal order di sini lagi buat wisuda adik."
-                </p>
+                <p class="text-warm-gray text-sm leading-relaxed">{{ $tip->content }}</p>
             </div>
-
-            <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-amber-100/50 w-full md:w-4/5 self-end" data-aos="fade-left">
-                <div class="flex items-center gap-4 mb-4">
-                    <div class="w-12 h-12 bg-terracotta/15 rounded-full flex items-center justify-center text-terracotta font-bold text-lg">B</div>
-                    <div>
-                        <h4 class="font-medium text-dark-oak">Bastian</h4>
-                        <div class="flex text-amber-400 text-sm">★★★★★</div>
-                    </div>
-                    <span class="ml-auto text-5xl text-terracotta/10 font-serif leading-none">"</span>
-                </div>
-                <p class="text-warm-gray text-sm leading-relaxed">
-                    "Pengiriman super cepat dan sangat aman, area Sidoarjo mantap. Buket untuk anniversary saya sampai dengan selamat. Desainnya sangat elegan dan istri saya juga suka sekali!"
-                </p>
-            </div>
-
-            <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-amber-100/50 w-full md:w-4/5 self-start" data-aos="fade-right">
-                <div class="flex items-center gap-4 mb-4">
-                    <div class="w-12 h-12 bg-sage-green/15 rounded-full flex items-center justify-center text-sage-green font-bold text-lg">C</div>
-                    <div>
-                        <h4 class="font-medium text-dark-oak">Clara</h4>
-                        <div class="flex text-amber-400 text-sm">★★★★★</div>
-                    </div>
-                    <span class="ml-auto text-5xl text-sage-green/10 font-serif leading-none">"</span>
-                </div>
-                <p class="text-warm-gray text-sm leading-relaxed">
-                    "Pesan mendadak buat acara wisuda teman dan ternyata bisa! Buket snack dan uangnya rapi banget. Benar-benar penyelamat di saat mepet. Bakal langganan terus!"
-                </p>
-            </div>
+            @endforeach
         </div>
+        @else
+        <div class="text-center text-warm-gray text-sm py-12">
+            Belum ada tips. Kunjungi halaman <a href="{{ route('blog.index') }}" class="text-sage-green underline">blog</a> kami untuk inspirasi.
+        </div>
+        @endif
     </div>
 </section>
 

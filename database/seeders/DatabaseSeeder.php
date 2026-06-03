@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Article;
 use App\Models\Product;
 use App\Models\Setting;
+use App\Models\Tip;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -48,6 +49,19 @@ class DatabaseSeeder extends Seeder
 
         foreach ($articles as $data) {
             Article::create($data);
+        }
+
+        $tips = [
+            ['title' => 'Pilih Bunga Sesuai Makna', 'content' => 'Mawar merah melambangkan cinta, lili untuk kesucian, dan matahari untuk kebahagiaan. Pilih bunga yang mewakili perasaan Anda.', 'icon' => 'flower', 'order' => 0, 'is_active' => true],
+            ['title' => 'Sesuaikan dengan Acara', 'content' => 'Buket wisuda sebaiknya warna cerah dan segar, anniversary dengan nuansa romantis seperti merah atau pink, ulang tahun dengan rangkaian ceria.', 'icon' => 'target', 'order' => 1, 'is_active' => true],
+            ['title' => 'Buket Bukan Sekadar Bunga', 'content' => 'Kombinasi snack, uang, atau boneka kecil bisa membuat buket lebih personal dan berkesan. Banyak yang suka buket snack untuk kejutan!', 'icon' => 'gift', 'order' => 2, 'is_active' => true],
+            ['title' => 'Warna Mempengaruhi Kesan', 'content' => 'Warna earthy seperti sage green dan terracotta sedang tren. Warna pastel cocok untuk kesan lembut, warna bold untuk pernyataan berani.', 'icon' => 'palette', 'order' => 3, 'is_active' => true],
+            ['title' => 'Rawat Agar Lebih Tahan Lama', 'content' => 'Potong batang secara miring, ganti air setiap hari, dan jauhkan dari sinar matahari langsung. Bisa tahan 5-7 hari dengan perawatan tepat.', 'icon' => 'droplet', 'order' => 4, 'is_active' => true],
+            ['title' => 'Pesan Lebih Awal', 'content' => 'Untuk hasil terbaik, pesan buket 2-3 hari sebelum acara. Khusus acara besar seperti wisuda, pesan seminggu sebelumnya untuk hindari kehabisan.', 'icon' => 'calendar', 'order' => 5, 'is_active' => true],
+        ];
+
+        foreach ($tips as $data) {
+            Tip::create($data);
         }
 
         $settings = [

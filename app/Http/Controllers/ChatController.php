@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\MessageSent;
 use App\Models\ChatConversation;
 use App\Models\ChatMessage;
 use Illuminate\Http\JsonResponse;
@@ -64,6 +65,8 @@ class ChatController extends Controller
             'sender' => 'customer',
             'message' => $messageContent,
         ]);
+
+        broadcast(new MessageSent($msg, $conversation));
 
         return response()->json([
             'success' => true,
