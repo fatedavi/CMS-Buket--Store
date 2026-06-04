@@ -57,7 +57,7 @@
 
         {{-- Reply input — kirim via AJAX bukan form submit --}}
         @if($conversation->status === 'active')
-        <form id="reply-form" class="border-t border-amber-100 p-3 bg-white">
+        <form id="reply-form" action="{{ route('admin.chat.reply', $conversation) }}" method="POST" class="border-t border-amber-100 p-3 bg-white">
             @csrf
             <div class="flex gap-2 items-end">
                 <textarea
@@ -165,6 +165,37 @@
         });
     }
 
+    // ── Polling fallback — fetch messages every 8s ─────────────────────────
+    let pollingInterval = null;
+    const POLL_MS = 8000;
+    const messagesUrl = '/admin/chat/' + convId + '/messages';
+
+    async function pollMessages() {
+        try {
+            const res = await fetch(messagesUrl, {
+                headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken }
+            });
+            const data = await res.json();
+            if (data.messages) {
+                data.messages.forEach(function (m) { appendMessage(m); });
+            }
+            if (data.status === 'closed') {
+                location.reload();
+            }
+        } catch (e) {
+            // silent — network errors saat polling tidak perlu di-notify
+        }
+    }
+
+    function startPolling() {
+        if (pollingInterval) return;
+        // Tunggu 3 detik dulu baru mulai polling, kasih Echo kesempatan connect
+        setTimeout(function () {
+            pollMessages();
+            pollingInterval = setInterval(pollMessages, POLL_MS);
+        }, 3000);
+    }
+
     // ── WebSocket via Echo ─────────────────────────────────────────────────
     function setStatus(text, color) {
         if (!wsStatus) return;
@@ -173,15 +204,29 @@
     }
 
     if (window.Echo && sessionId) {
-        // Admin subscribe ke channel session customer dengan kirim session_id di header
-        // channels.php sudah handle: kalau is_admin → return true
+        // 1) Subscribe ke channel session customer
         window.Echo.private('chat.' + sessionId)
             .listen('MessageSent', function (e) {
-                console.log('[Admin] MessageSent diterima:', e);
+                console.log('[Admin] MessageSent via chat.session:', e);
                 if (e.message) appendMessage(e.message);
             })
             .listen('ChatClosed', function () {
                 location.reload();
+            });
+
+        // 2) Subscribe ke channel global admin — tangkap semua pesan
+        window.Echo.private('admin.chat')
+            .listen('MessageSent', function (e) {
+                console.log('[Admin] MessageSent via admin.chat:', e);
+                // Hanya tampilkan jika untuk percakapan ini
+                if (e.message && e.conversation_id === convId) {
+                    appendMessage(e.message);
+                }
+            })
+            .listen('ChatClosed', function (e) {
+                if (e.conversation_id === convId) {
+                    location.reload();
+                }
             });
 
         // Cek status koneksi Pusher/Reverb
@@ -190,17 +235,19 @@
             pusherConn.connection.bind('connected', () => setStatus('● Terhubung', 'bg-green-100 text-green-600'));
             pusherConn.connection.bind('disconnected', () => setStatus('○ Terputus', 'bg-red-100 text-red-500'));
             pusherConn.connection.bind('failed', () => setStatus('✕ Gagal', 'bg-red-100 text-red-500'));
-            // Cek status awal
             if (pusherConn.connection.state === 'connected') {
                 setStatus('● Terhubung', 'bg-green-100 text-green-600');
             }
         }
 
-        console.log('[Admin Chat] Listening on: private-chat.' + sessionId);
+        console.log('[Admin Chat] Listening on: private-chat.' + sessionId + ' + private-admin.chat');
     } else {
-        setStatus('✕ Echo tidak aktif', 'bg-red-100 text-red-500');
-        console.warn('[Admin Chat] window.Echo tidak tersedia atau sessionId kosong.');
+        setStatus('✕ Polling 8dtk', 'bg-amber-100 text-amber-600');
+        console.warn('[Admin Chat] Echo tidak tersedia, fallback ke polling.');
     }
+
+    // ── Mulai polling sebagai safety net ────────────────────────────────────
+    startPolling();
 })();
 </script>
 @endpush

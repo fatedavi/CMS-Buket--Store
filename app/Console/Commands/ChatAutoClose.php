@@ -2,8 +2,10 @@
 
 namespace App\Console\Commands;
 
+use App\Events\ChatClosed;
 use App\Models\ChatConversation;
 use App\Models\ChatMessage;
+use Illuminate\Broadcasting\BroadcastException;
 use Illuminate\Console\Command;
 
 class ChatAutoClose extends Command
@@ -16,14 +18,29 @@ class ChatAutoClose extends Command
     {
         $hours = (int) $this->option('hours');
         $cutoff = now()->subHours($hours);
+        $abandonedCutoff = now()->subHours(24);
         $closed = 0;
 
         ChatConversation::where('status', 'active')
-            ->chunk(50, function ($conversations) use ($cutoff, &$closed) {
+            ->chunk(50, function ($conversations) use ($cutoff, $abandonedCutoff, &$closed) {
                 foreach ($conversations as $conv) {
                     $lastMsg = $conv->messages()->latest()->first();
 
+                    $shouldClose = false;
+
                     if ($lastMsg && $lastMsg->sender === 'admin' && $lastMsg->created_at->lt($cutoff)) {
+                        $shouldClose = true;
+                    }
+
+                    if ($lastMsg && $lastMsg->created_at->lt($abandonedCutoff)) {
+                        $shouldClose = true;
+                    }
+
+                    if (! $lastMsg && $conv->created_at->lt($abandonedCutoff)) {
+                        $shouldClose = true;
+                    }
+
+                    if ($shouldClose) {
                         ChatMessage::create([
                             'chat_conversation_id' => $conv->id,
                             'sender' => 'system',
@@ -31,6 +48,11 @@ class ChatAutoClose extends Command
                         ]);
 
                         $conv->update(['status' => 'closed']);
+                        try {
+                            broadcast(new ChatClosed($conv));
+                        } catch (BroadcastException $e) {
+                            // Reverb tidak jalan — chat tetap berfungsi
+                        }
                         $closed++;
                     }
                 }

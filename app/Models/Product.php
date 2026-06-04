@@ -21,16 +21,24 @@ class Product extends Model
 
     public function getImageUrlAttribute(): string
     {
-        if (!$this->image) return '';
-        if (str_starts_with($this->image, 'http')) return $this->image;
+        if (! $this->image) {
+            return '';
+        }
+        if (str_starts_with($this->image, 'http')) {
+            return $this->image;
+        }
+
         return Storage::url($this->image);
     }
 
     public function getImagesUrlAttribute(): array
     {
-        if (!$this->images) return [];
-        return array_map(fn($img) => match (true) {
-            !$img => '',
+        if (! $this->images) {
+            return [];
+        }
+
+        return array_map(fn ($img) => match (true) {
+            ! $img => '',
             str_starts_with($img, 'http') => $img,
             default => Storage::url($img),
         }, $this->images);

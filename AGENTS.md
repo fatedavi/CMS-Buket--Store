@@ -19,6 +19,12 @@ composer run dev    # serve + queue + pail (logs) + Vite HMR
 ```
 Or: `php artisan serve`, `npm run dev`, `php artisan queue:listen --tries=1`, `php artisan pail`.
 
+**Chat real-time (WebSocket):** Jalankan Reverb di terminal terpisah:
+```bash
+php artisan reverb:start
+```
+Tanpa Reverb, chat tetap berfungsi via polling 8 detik (broadcast error otomatis di-catch).
+
 ## Tests & Lint
 ```bash
 ./vendor/bin/phpunit

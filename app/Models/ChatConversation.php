@@ -7,14 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ChatConversation extends Model
 {
-    protected $fillable = ['session_id', 'customer_name', 'status', 'admin_typing_at'];
-
-    protected function casts(): array
-    {
-        return [
-            'admin_typing_at' => 'datetime',
-        ];
-    }
+    protected $fillable = ['session_id', 'customer_name', 'status'];
 
     public function messages(): HasMany
     {

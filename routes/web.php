@@ -26,10 +26,11 @@ Route::middleware('guest')->group(function () {
 
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
 
-Route::post('/chat/send', [ChatController::class, 'send'])->name('chat.send');
+Route::post('/chat/send', [ChatController::class, 'send'])->name('chat.send')->middleware('throttle:30,1');
 Route::get('/chat/messages', [ChatController::class, 'messages'])->name('chat.messages');
+Route::get('/chat/admin-status', [ChatController::class, 'adminStatus'])->name('chat.admin.status');
 
-Route::prefix('/admin')->name('admin.')->middleware(['auth', 'is_admin'])->group(function () {
+Route::prefix('/admin')->name('admin.')->middleware(['auth', 'is_admin', 'track.admin'])->group(function () {
     Route::get('/', [AdminController::class, 'index'])->name('index');
     Route::get('/produk', [AdminController::class, 'products'])->name('products');
     Route::get('/produk/baru', [AdminController::class, 'productsCreate'])->name('products.create');
@@ -47,6 +48,7 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'is_admin'])->group
     Route::get('/chat/arsip', [AdminController::class, 'chatArchive'])->name('chat.archive');
     Route::get('/chat/arsip/{conversation}', [AdminController::class, 'chatArchiveShow'])->name('chat.archive.show');
     Route::get('/chat/{conversation}', [AdminController::class, 'chatShow'])->name('chat.show');
+    Route::get('/chat/{conversation}/messages', [AdminController::class, 'chatMessages'])->name('chat.messages.fetch');
     Route::post('/chat/{conversation}/reply', [AdminController::class, 'chatReply'])->name('chat.reply');
     Route::post('/chat/{conversation}/close', [AdminController::class, 'chatClose'])->name('chat.close');
     Route::get('/tips', [AdminController::class, 'tips'])->name('tips');

@@ -11,9 +11,11 @@ use App\Models\Product;
 use App\Models\Setting;
 use App\Models\Tip;
 use App\Models\User;
+use Illuminate\Broadcasting\BroadcastException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -49,13 +51,13 @@ class AdminController extends Controller
     public function productsStore(Request $request): RedirectResponse
     {
         $data = $request->validate([
-            'name'        => 'required|string|max:255',
-            'slug'        => 'nullable|string|max:255|unique:products,slug',
-            'category'    => 'required|string|max:255',
+            'name' => 'required|string|max:255',
+            'slug' => 'nullable|string|max:255|unique:products,slug',
+            'category' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'image'       => 'nullable|image|max:2048',
-            'badge'       => 'nullable|string|max:255',
-            'status'      => 'required|in:Aktif,Draft',
+            'image' => 'nullable|image|max:2048',
+            'badge' => 'nullable|string|max:255',
+            'status' => 'required|in:Aktif,Draft',
         ]);
 
         $data['slug'] = $data['slug'] ?: Str::slug($data['name']);
@@ -80,20 +82,20 @@ class AdminController extends Controller
     public function productsUpdate(Request $request, Product $product): RedirectResponse
     {
         $data = $request->validate([
-            'name'        => 'required|string|max:255',
-            'slug'        => 'nullable|string|max:255|unique:products,slug,'.$product->id,
-            'category'    => 'required|string|max:255',
+            'name' => 'required|string|max:255',
+            'slug' => 'nullable|string|max:255|unique:products,slug,'.$product->id,
+            'category' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'image'       => 'nullable|image|max:2048',
-            'badge'       => 'nullable|string|max:255',
-            'status'      => 'required|in:Aktif,Draft',
+            'image' => 'nullable|image|max:2048',
+            'badge' => 'nullable|string|max:255',
+            'status' => 'required|in:Aktif,Draft',
         ]);
 
         $data['slug'] = $data['slug'] ?: Str::slug($data['name']);
 
         // Hapus gambar lama kalau centang remove
         if ($request->boolean('remove_image') && $product->image) {
-            if (!str_starts_with($product->image, 'http')) {
+            if (! str_starts_with($product->image, 'http')) {
                 Storage::disk('public')->delete($product->image);
             }
             $data['image'] = null;
@@ -102,7 +104,7 @@ class AdminController extends Controller
         // Upload gambar baru (menggantikan lama jika ada)
         if ($request->hasFile('image')) {
             // Hapus gambar lama sebelum upload baru
-            if ($product->image && !str_starts_with($product->image, 'http')) {
+            if ($product->image && ! str_starts_with($product->image, 'http')) {
                 Storage::disk('public')->delete($product->image);
             }
             $data['image'] = $request->file('image')->store('products', 'public');
@@ -203,6 +205,16 @@ class AdminController extends Controller
         return view('admin.chat.show', compact('conversation'));
     }
 
+    public function chatMessages(ChatConversation $conversation): JsonResponse
+    {
+        $conversation->load('messages');
+
+        return response()->json([
+            'messages' => $conversation->messages,
+            'status' => $conversation->status,
+        ]);
+    }
+
     public function chatReply(Request $request, ChatConversation $conversation): RedirectResponse|JsonResponse
     {
         $data = $request->validate([
@@ -215,7 +227,11 @@ class AdminController extends Controller
             'message' => $data['message'],
         ]);
 
-        broadcast(new MessageSent($msg, $conversation));
+        try {
+            broadcast(new MessageSent($msg, $conversation));
+        } catch (BroadcastException $e) {
+            // Reverb tidak jalan — chat tetap berfungsi
+        }
 
         // Kalau dipanggil via AJAX (Accept: application/json), return JSON
         if ($request->expectsJson()) {
@@ -252,7 +268,11 @@ class AdminController extends Controller
     {
         $conversation->update(['status' => 'closed']);
 
-        broadcast(new ChatClosed($conversation));
+        try {
+            broadcast(new ChatClosed($conversation));
+        } catch (BroadcastException $e) {
+            // Reverb tidak jalan — chat tetap berfungsi
+        }
 
         return redirect()->route('admin.chat')->with('success', 'Percakapan ditutup.');
     }
@@ -274,7 +294,7 @@ class AdminController extends Controller
         $data = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
-            'icon' => 'nullable|string|max:50|in:' . implode(',', Tip::iconOptions()),
+            'icon' => 'nullable|string|max:50|in:'.implode(',', Tip::iconOptions()),
             'order' => 'nullable|integer|min:0',
             'is_active' => 'boolean',
         ]);
@@ -297,7 +317,7 @@ class AdminController extends Controller
         $data = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'required|string',
-            'icon' => 'nullable|string|max:50|in:' . implode(',', Tip::iconOptions()),
+            'icon' => 'nullable|string|max:50|in:'.implode(',', Tip::iconOptions()),
             'order' => 'nullable|integer|min:0',
             'is_active' => 'boolean',
         ]);
@@ -321,21 +341,62 @@ class AdminController extends Controller
     {
         $settings = Setting::pluck('value', 'key')->toArray();
 
-        return view('admin.settings', compact('settings'));
+        $categories = Product::where('status', 'Aktif')
+            ->distinct()
+            ->pluck('category')
+            ->sort()
+            ->values()
+            ->toArray();
+
+        return view('admin.settings', compact('settings', 'categories'));
     }
 
     public function settingsUpdate(Request $request): RedirectResponse
     {
-        $data = $request->validate([
-            'store_name' => 'required|string|max:255',
-            'whatsapp' => 'required|string|max:255',
-            'address' => 'nullable|string',
-            'instagram' => 'nullable|string|max:255',
-            'hours' => 'nullable|string|max:255',
-        ]);
+        $textKeys = ['store_name', 'whatsapp', 'address', 'instagram', 'hours'];
 
-        foreach ($data as $key => $value) {
-            Setting::updateOrCreate(['key' => $key], ['value' => $value]);
+        $rules = [];
+        foreach ($textKeys as $key) {
+            $rules[$key] = $key === 'store_name' || $key === 'whatsapp' ? 'required|string|max:255' : 'nullable|string|max:255';
+        }
+
+        $rules['hero_slide_0'] = 'nullable|image|max:2048';
+        $rules['hero_slide_1'] = 'nullable|image|max:2048';
+        $rules['hero_slide_2'] = 'nullable|image|max:2048';
+        $rules['hero_slide_3'] = 'nullable|image|max:2048';
+        $rules['hero_slide_4'] = 'nullable|image|max:2048';
+
+        foreach ($request->allFiles() as $key => $file) {
+            if (str_starts_with($key, 'category_image_')) {
+                $rules[$key] = 'nullable|image|max:2048';
+            }
+        }
+
+        $request->validate($rules);
+
+        foreach ($textKeys as $key) {
+            if ($request->filled($key)) {
+                Setting::updateOrCreate(['key' => $key], ['value' => $request->input($key)]);
+                Cache::forget('setting.'.$key);
+            }
+        }
+
+        $imageKeys = ['hero_slide_0', 'hero_slide_1', 'hero_slide_2', 'hero_slide_3', 'hero_slide_4'];
+
+        foreach ($imageKeys as $key) {
+            if ($request->hasFile($key)) {
+                $path = $request->file($key)->store('settings', 'public');
+                Setting::updateOrCreate(['key' => $key], ['value' => $path]);
+                Cache::forget('setting.'.$key);
+            }
+        }
+
+        foreach ($request->allFiles() as $key => $file) {
+            if (str_starts_with($key, 'category_image_')) {
+                $path = $file->store('settings', 'public');
+                Setting::updateOrCreate(['key' => $key], ['value' => $path]);
+                Cache::forget('setting.'.$key);
+            }
         }
 
         return redirect()->route('admin.settings')->with('success', 'Pengaturan berhasil disimpan.');

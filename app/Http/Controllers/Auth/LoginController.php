@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 
 class LoginController extends Controller
@@ -34,6 +35,7 @@ class LoginController extends Controller
 
     public function logout(Request $request): RedirectResponse
     {
+        Cache::forget('admin_online_at');
         auth()->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();

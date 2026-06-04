@@ -48,8 +48,13 @@ class ProductController extends Controller
     // Helper static untuk generate URL gambar produk (dipakai di view)
     public static function imageUrl(?string $image): string
     {
-        if (!$image) return '';
-        if (str_starts_with($image, 'http')) return $image;
+        if (! $image) {
+            return '';
+        }
+        if (str_starts_with($image, 'http')) {
+            return $image;
+        }
+
         return Storage::url($image);
     }
 }

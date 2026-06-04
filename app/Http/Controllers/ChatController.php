@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Events\MessageSent;
 use App\Models\ChatConversation;
 use App\Models\ChatMessage;
+use Illuminate\Broadcasting\BroadcastException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\RateLimiter;
 
 class ChatController extends Controller
@@ -17,21 +19,31 @@ class ChatController extends Controller
         $maxMessage = $user ? 5000 : 1000;
 
         $sessionId = $request->input('session_id', session()->getId());
+        $ipKey = 'chat-ip:'.$request->ip();
 
-        if (! $user) {
+        if ($user) {
+            $key = 'chat-user:'.$user->id;
+            $maxAttempts = 20;
+        } else {
             $key = 'chat-guest:'.$sessionId;
-
-            if (RateLimiter::tooManyAttempts($key, 5)) {
-                $seconds = RateLimiter::availableIn($key);
-
-                return response()->json([
-                    'success' => false,
-                    'message' => "Terlalu banyak pesan. Coba lagi dalam {$seconds} detik.",
-                ], 429);
-            }
-
-            RateLimiter::hit($key, 60);
+            $maxAttempts = 5;
         }
+
+        if (RateLimiter::tooManyAttempts($key, $maxAttempts) || RateLimiter::tooManyAttempts($ipKey, $maxAttempts)) {
+            $seconds = min(
+                RateLimiter::availableIn($key),
+                RateLimiter::availableIn($ipKey)
+            );
+
+            return response()->json([
+                'success' => false,
+                'message' => "Terlalu banyak pesan. Coba lagi dalam {$seconds} detik.",
+            ], 429);
+        }
+
+        RateLimiter::hit($key, 60);
+        RateLimiter::hit($ipKey, 60);
+
         $rules = ['message' => 'required|string|max:'.$maxMessage];
 
         if ($user) {
@@ -66,7 +78,11 @@ class ChatController extends Controller
             'message' => $messageContent,
         ]);
 
-        broadcast(new MessageSent($msg, $conversation));
+        try {
+            broadcast(new MessageSent($msg, $conversation));
+        } catch (BroadcastException $e) {
+            // Reverb tidak jalan — chat tetap berfungsi tanpa real-time
+        }
 
         return response()->json([
             'success' => true,
@@ -74,6 +90,17 @@ class ChatController extends Controller
             'conversation_id' => $conversation->id,
             'session_id' => $sessionId,
             'user' => $user ? ['name' => $user->name, 'is_admin' => $user->is_admin] : null,
+        ]);
+    }
+
+    public function adminStatus(): JsonResponse
+    {
+        $lastSeen = Cache::get('admin_online_at');
+        $online = $lastSeen && $lastSeen->gt(now()->subMinute());
+
+        return response()->json([
+            'online' => $online,
+            'last_seen_ago' => $lastSeen ? $lastSeen->diffForHumans() : null,
         ]);
     }
 

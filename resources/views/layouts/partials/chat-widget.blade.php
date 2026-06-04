@@ -2,7 +2,7 @@
     <!-- Chat Button -->
     <button
         @click="open = true; initChat()"
-        class="bg-sage-green hover:brightness-110 text-white rounded-full p-4 shadow-lg flex items-center justify-center transition-all hover:-translate-y-1"
+        class="bg-sage-green hover:brightness-110 text-white rounded-full p-4 shadow-lg flex items-center justify-center transition-all hover:-translate-y-1 relative"
         x-show="!open"
         x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="opacity-0 scale-50"
@@ -16,6 +16,7 @@
         <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
         </svg>
+        <span class="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-white transition-colors duration-300" :class="adminOnline ? 'bg-green-500' : 'bg-gray-400'"></span>
     </button>
 
     <!-- Chat Box -->
@@ -35,11 +36,11 @@
             <div class="flex items-center gap-3">
                 <div class="relative">
                     <div class="w-10 h-10 bg-sage-green rounded-full flex items-center justify-center font-playfair font-semibold text-lg border border-white/20">CS</div>
-                    <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-dark-oak rounded-full"></span>
+                    <span class="absolute bottom-0 right-0 w-3 h-3 border-2 border-dark-oak rounded-full transition-colors duration-300" :class="adminOnline ? 'bg-green-500' : 'bg-gray-400'"></span>
                 </div>
                 <div>
                     <h3 class="font-medium text-[15px] leading-tight">Customer Service</h3>
-                    <p class="text-[11px] text-white/70 mt-0.5" x-text="onlineStatus"></p>
+                    <p class="text-[11px] mt-0.5 transition-colors duration-300" :class="adminOnline ? 'text-green-300' : 'text-white/50'" x-text="adminOnline ? 'Online' : 'Offline'"></p>
                 </div>
             </div>
             <button @click="open = false; stopEcho()" class="text-white/60 hover:text-white transition-colors bg-white/10 hover:bg-white/20 rounded-full p-1.5">
@@ -69,7 +70,7 @@
                         <div x-show="msg.sender !== 'system'" class="flex" :class="msg.sender === 'customer' ? 'justify-end' : 'max-w-[88%]'">
                             <div x-show="msg.sender === 'admin'" class="w-7 h-7 bg-sage-green rounded-full flex-shrink-0 flex items-center justify-center text-white text-[10px] font-bold mt-1 mr-2">CS</div>
                             <div>
-                                <div class="text-[10px] text-warm-gray mb-1" :class="msg.sender === 'customer' ? 'text-right mr-1' : 'ml-1'" x-text="formatTime(msg.created_at)"></div>
+                                <div class="text-[10px] text-warm-gray mb-1" :class="msg.sender === 'customer' ? 'text-right mr-1' : 'ml-1'" x-text="formatTime(msg.created_at, msg.sender)"></div>
                                 <div class="px-4 py-2.5 rounded-2xl shadow-sm border text-sm leading-relaxed" :class="msg.sender === 'customer' ? 'bg-sage-green text-white rounded-tr-md border-sage-green' : 'bg-white text-dark-oak rounded-tl-md border-gray-100'">
                                     <template x-for="part in parseMessage(msg.message)" :key="part.type">
                                         <div>
@@ -144,10 +145,16 @@ function chatWidget() {
         selectedImage: null,
         selectedImageUrl: null,
         previewImage: null,
-        onlineStatus: 'Membalas dalam beberapa menit',
+        adminOnline: false,
         closed: false,
         errorMsg: '',
         echoChannel: null,
+        pollTimer: null,
+        adminPollTimer: null,
+
+        init() {
+            this.startAdminPolling();
+        },
 
         initChat() {
             if (!this.sessionId) {
@@ -156,6 +163,8 @@ function chatWidget() {
             }
             this.loadMessages();
             this.listenEcho();
+            this.startPolling();
+            this.startAdminPolling();
         },
 
         listenEcho() {
@@ -177,6 +186,49 @@ function chatWidget() {
             if (this.echoChannel) {
                 window.Echo.leave('chat.' + this.sessionId);
                 this.echoChannel = null;
+            }
+            this.stopPolling();
+            this.stopAdminPolling();
+        },
+
+        startPolling() {
+            this.stopPolling();
+            this.pollTimer = setInterval(() => {
+                if (this.open && !this.closed) {
+                    this.loadMessages();
+                }
+            }, 8000);
+        },
+
+        stopPolling() {
+            if (this.pollTimer) {
+                clearInterval(this.pollTimer);
+                this.pollTimer = null;
+            }
+        },
+
+        startAdminPolling() {
+            this.stopAdminPolling();
+            this.checkAdminStatus();
+            this.adminPollTimer = setInterval(() => {
+                this.checkAdminStatus();
+            }, 30000);
+        },
+
+        stopAdminPolling() {
+            if (this.adminPollTimer) {
+                clearInterval(this.adminPollTimer);
+                this.adminPollTimer = null;
+            }
+        },
+
+        async checkAdminStatus() {
+            try {
+                const res = await fetch('/chat/admin-status');
+                const data = await res.json();
+                this.adminOnline = data.online;
+            } catch (e) {
+                // silent — fallback ke status terakhir
             }
         },
 
@@ -269,10 +321,12 @@ function chatWidget() {
             if (el) el.scrollTop = el.scrollHeight;
         },
 
-        formatTime(dateStr) {
+        formatTime(dateStr, sender) {
             if (!dateStr) return '';
             const d = new Date(dateStr);
-            return 'CS Toko Buket • ' + d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
+            const time = d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
+            const label = sender === 'customer' ? 'Anda' : 'CS Toko Buket';
+            return label + ' • ' + time;
         }
     };
 }

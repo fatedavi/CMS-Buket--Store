@@ -51,3 +51,56 @@
 </div>
 @endif
 @endsection
+
+@push('scripts')
+<script>
+(function () {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content
+                   || document.querySelector('input[name="_token"]')?.value
+                   || '';
+
+    // ── Notifikasi pesan baru ───────────────────────────────────────────────
+    let newMsgCount = 0;
+    const body = document.body;
+
+    function showNotification(count) {
+        // Hapus badge lama jika ada
+        const oldBadge = document.getElementById('new-msg-badge');
+        if (oldBadge) oldBadge.remove();
+
+        if (count <= 0) return;
+
+        const badge = document.createElement('div');
+        badge.id = 'new-msg-badge';
+        badge.className = 'fixed bottom-6 right-6 z-50 bg-terracotta text-white text-sm px-4 py-3 rounded-2xl shadow-lg flex items-center gap-2 cursor-pointer hover:brightness-110 transition-all';
+        badge.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg> ' + count + ' pesan baru — klik untuk muat ulang';
+        badge.addEventListener('click', function () { location.reload(); });
+        body.appendChild(badge);
+
+        // Auto-reload setelah 5 detik
+        setTimeout(function () { location.reload(); }, 5000);
+    }
+
+    // ── WebSocket / Echo ────────────────────────────────────────────────────
+    if (window.Echo) {
+        window.Echo.private('admin.chat')
+            .listen('MessageSent', function (e) {
+                console.log('[Admin Index] MessageSent via admin.chat:', e);
+                if (e.message && e.message.sender === 'customer') {
+                    newMsgCount++;
+                    showNotification(newMsgCount);
+                }
+            })
+            .listen('ChatClosed', function (e) {
+                console.log('[Admin Index] ChatClosed:', e);
+                location.reload();
+            });
+    }
+
+    // ── Polling fallback: reload tiap 30 detik kalau Echo mati ─────────────
+    if (!window.Echo) {
+        setTimeout(function () { location.reload(); }, 30000);
+    }
+})();
+</script>
+@endpush
