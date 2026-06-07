@@ -21,7 +21,7 @@
         <div class="bg-cream rounded-2xl p-6 text-center mt-12">
             <p class="font-playfair text-xl text-dark-oak">Siap memesan buket bunga?</p>
             <p class="text-warm-gray text-sm mt-2">Konsultasikan kebutuhanmu langsung via WhatsApp</p>
-            <a href="https://wa.me/6285649150049" class="inline-block mt-4 bg-sage-green text-white rounded-full px-6 py-3 font-medium">Hubungi via WhatsApp</a>
+            <a href="https://wa.me/{{ setting('whatsapp_link', '6285649150049') }}" class="inline-block mt-4 bg-sage-green text-white rounded-full px-6 py-3 font-medium">Hubungi via WhatsApp</a>
         </div>
     </div>
 </article>

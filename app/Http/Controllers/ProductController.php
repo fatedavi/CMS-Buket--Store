@@ -2,36 +2,49 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\Product;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class ProductController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
-        $products = Product::where('status', 'Aktif')->latest()->get();
+        $query = Product::where('status', 'Aktif')->with('category');
+
+        if ($request->filled('kategori')) {
+            $category = Category::where('slug', $request->kategori)->first();
+            if ($category) {
+                $query->where('category_id', $category->id);
+            }
+        }
+
+        $products = $query->latest()->get();
 
         $categories = array_merge(
             ['Semua'],
-            $products->pluck('category')->unique()->sort()->values()->toArray()
+            Category::where('is_active', true)->pluck('name')->toArray()
         );
 
-        return view('pages.catalog.index', compact('products', 'categories'));
+        $minPrice = Product::where('status', 'Aktif')->min('price');
+        $maxPrice = Product::where('status', 'Aktif')->max('price');
+
+        return view('pages.catalog.index', compact('products', 'categories', 'minPrice', 'maxPrice'));
     }
 
     public function show(string $slug): View
     {
-        $product = Product::where('slug', $slug)->where('status', 'Aktif')->firstOrFail();
+        $product = Product::where('slug', $slug)->where('status', 'Aktif')->with('category')->firstOrFail();
 
         $relatedProducts = Product::where('status', 'Aktif')
             ->where('id', '!=', $product->id)
-            ->where('category', $product->category)
+            ->where('category_id', $product->category_id)
             ->latest()
             ->take(4)
             ->get();
 
-        // Kalau kurang dari 4, tambah dari produk lain
         if ($relatedProducts->count() < 4) {
             $extra = Product::where('status', 'Aktif')
                 ->where('id', '!=', $product->id)
@@ -45,7 +58,6 @@ class ProductController extends Controller
         return view('pages.catalog.show', compact('product', 'relatedProducts'));
     }
 
-    // Helper static untuk generate URL gambar produk (dipakai di view)
     public static function imageUrl(?string $image): string
     {
         if (! $image) {

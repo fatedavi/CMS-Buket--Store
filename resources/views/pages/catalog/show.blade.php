@@ -24,8 +24,11 @@
             </div>
             
             <div>
-                <span class="bg-cream text-warm-gray rounded-lg px-3 py-1 text-xs">{{ $product['category'] }}</span>
+                <span class="bg-cream text-warm-gray rounded-lg px-3 py-1 text-xs">{{ $product->category->name ?? '—' }}</span>
                 <h1 class="font-playfair text-2xl text-dark-oak mt-4">{{ $product['name'] }}</h1>
+                @if($product['price'])
+                <p class="font-playfair text-2xl text-sage-green mt-2">Rp {{ number_format($product['price'], 0, ',', '.') }}</p>
+                @endif
                 <div class="border-t border-amber-100 my-4"></div>
                 <p class="text-warm-gray text-sm leading-relaxed mb-4">{{ $product['description'] }}</p>
                 <div class="border-t border-amber-100 my-4"></div>
@@ -35,7 +38,7 @@
                     <span class="bg-cream text-warm-gray rounded-full px-3 py-1 text-xs">{{ $tag }}</span>
                     @endforeach
                 </div>
-                <a href="https://wa.me/6285649150049?text=Halo, saya tertarik dengan {{ $product['name'] }}. Apakah tersedia?" class="block w-full bg-sage-green text-white rounded-2xl py-4 text-center font-medium hover:brightness-110 transition-all">
+                <a href="https://wa.me/{{ setting('whatsapp_link', '6285649150049') }}?text={{ urlencode('Halo, saya tertarik dengan ' . $product['name'] . '. Apakah tersedia?') }}" class="block w-full bg-sage-green text-white rounded-2xl py-4 text-center font-medium hover:brightness-110 transition-all">
                     Tanya & Pesan via WhatsApp
                 </a>
                 <div class="mt-6 space-y-2 text-sm text-warm-gray">
@@ -59,7 +62,7 @@
                 </div>
                 <div class="p-3">
                     <h3 class="font-medium text-dark-oak text-sm">{{ $product['name'] }}</h3>
-                    <p class="text-xs text-warm-gray">{{ $product['category'] }}</p>
+                    <p class="text-xs text-warm-gray">{{ $product->category->name ?? '—' }}</p>
                 </div>
             </a>
             @endforeach

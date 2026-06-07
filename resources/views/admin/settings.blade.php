@@ -52,28 +52,6 @@
             </div>
         </div>
 
-        {{-- Gambar Kategori --}}
-        <div class="bg-white rounded-2xl border border-amber-100 p-6">
-            <h2 class="font-playfair text-lg text-dark-oak mb-4">Gambar Kategori</h2>
-            <p class="text-xs text-warm-gray mb-4">Kategori diambil otomatis dari data produk. Upload gambar untuk setiap kategori yang ada.</p>
-            <div class="space-y-4">
-                @forelse($categories as $cat)
-                @php
-                    $key = str_replace(' ', '_', strtolower($cat));
-                @endphp
-                <div>
-                    <label class="block text-sm font-medium text-dark-oak mb-1">{{ $cat }}</label>
-                    <input type="file" name="category_image_{{ $key }}" accept="image/*" class="w-full text-sm text-warm-gray file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-medium file:bg-sage-green/10 file:text-sage-green hover:file:bg-sage-green/20">
-                    @if(!empty($settings['category_image_'.$key]))
-                    <img src="{{ Storage::url($settings['category_image_'.$key]) }}" class="w-32 mt-2 rounded-lg border border-amber-100 h-20 object-cover">
-                    @endif
-                </div>
-                @empty
-                <p class="text-warm-gray text-sm">Belum ada kategori. Tambah produk terlebih dahulu.</p>
-                @endforelse
-            </div>
-        </div>
-
         <button type="submit" class="bg-sage-green text-white rounded-xl px-8 py-3 font-medium hover:brightness-110 transition-all">Simpan Semua Pengaturan</button>
     </div>
 </form>

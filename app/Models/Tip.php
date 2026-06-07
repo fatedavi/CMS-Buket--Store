@@ -3,11 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class Tip extends Model
 {
     protected $fillable = [
-        'title', 'content', 'icon', 'order', 'is_active',
+        'title', 'content', 'icon', 'background_image', 'order', 'is_active',
     ];
 
     protected function casts(): array
@@ -26,5 +27,17 @@ class Tip extends Model
             'truck', 'cherry-blossom', 'map-pin', 'phone', 'wave', 'diamond',
             'fire', 'moon', 'sun', 'droplet', 'scissors', 'book', 'music',
         ];
+    }
+
+    public function getBackgroundImageUrlAttribute(): string
+    {
+        if (! $this->background_image) {
+            return '';
+        }
+        if (str_starts_with($this->background_image, 'http')) {
+            return $this->background_image;
+        }
+
+        return Storage::url($this->background_image);
     }
 }

@@ -51,6 +51,12 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'is_admin', 'track.
     Route::get('/chat/{conversation}/messages', [AdminController::class, 'chatMessages'])->name('chat.messages.fetch');
     Route::post('/chat/{conversation}/reply', [AdminController::class, 'chatReply'])->name('chat.reply');
     Route::post('/chat/{conversation}/close', [AdminController::class, 'chatClose'])->name('chat.close');
+    Route::get('/kategori', [AdminController::class, 'categories'])->name('categories');
+    Route::get('/kategori/baru', [AdminController::class, 'categoriesCreate'])->name('categories.create');
+    Route::post('/kategori', [AdminController::class, 'categoriesStore'])->name('categories.store');
+    Route::get('/kategori/{category}/edit', [AdminController::class, 'categoriesEdit'])->name('categories.edit');
+    Route::put('/kategori/{category}', [AdminController::class, 'categoriesUpdate'])->name('categories.update');
+    Route::delete('/kategori/{category}', [AdminController::class, 'categoriesDestroy'])->name('categories.destroy');
     Route::get('/tips', [AdminController::class, 'tips'])->name('tips');
     Route::get('/tips/baru', [AdminController::class, 'tipsCreate'])->name('tips.create');
     Route::post('/tips', [AdminController::class, 'tipsStore'])->name('tips.store');

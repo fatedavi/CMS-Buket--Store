@@ -7,7 +7,7 @@
     filterCategory: 'Semua',
     items: {{ $products->map(fn($p) => [
         'name' => $p->name,
-        'category' => $p->category,
+        'category' => $p->category->name ?? '',
         'status' => $p->status,
     ])->toJson() }},
     get filteredItems() {
@@ -35,9 +35,8 @@
         </select>
         <select x-model="filterCategory" class="border border-amber-200 rounded-xl px-4 py-2 text-sm text-warm-gray focus:outline-none focus:border-sage-green">
             <option value="Semua">Semua Kategori</option>
-            @php $cats = $products->pluck('category')->unique()->sort(); @endphp
-            @foreach($cats as $cat)
-            <option value="{{ $cat }}">{{ $cat }}</option>
+            @foreach(\App\Models\Category::all() as $cat)
+            <option value="{{ $cat->name }}">{{ $cat->name }}</option>
             @endforeach
         </select>
     </div>
@@ -57,7 +56,7 @@
             <tbody>
                 @forelse($products as $product)
                 <tr class="border-t border-amber-100 hover:bg-[#faf8f4]"
-                    x-show="filteredItems.some(i => i.name === '{{ $product->name }}' && i.category === '{{ $product->category }}' && i.status === '{{ $product->status }}')">
+                    x-show="filteredItems.some(i => i.name === '{{ $product->name }}' && i.category === '{{ $product->category->name ?? '' }}' && i.status === '{{ $product->status }}')">
                     <td class="px-4 py-3">
                         @php
                             $imgSrc = $product->image
@@ -73,7 +72,7 @@
                         @endif
                     </td>
                     <td class="px-4 py-3 text-sm text-dark-oak">{{ $product->name }}</td>
-                    <td class="px-4 py-3 text-sm text-warm-gray">{{ $product->category }}</td>
+                    <td class="px-4 py-3 text-sm text-warm-gray">{{ $product->category->name ?? '—' }}</td>
                     <td class="px-4 py-3">
                         <span class="px-2 py-1 rounded text-xs {{ $product->status === 'Aktif' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' }}">
                             {{ $product->status }}

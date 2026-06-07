@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Events\ChatClosed;
 use App\Events\MessageSent;
 use App\Models\Article;
+use App\Models\Category;
 use App\Models\ChatConversation;
 use App\Models\ChatMessage;
 use App\Models\Product;
 use App\Models\Setting;
 use App\Models\Tip;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Broadcasting\BroadcastException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -27,8 +29,10 @@ class AdminController extends Controller
         $stats = [
             'total_products' => Product::count(),
             'total_articles' => Article::count(),
-            'total_categories' => Product::distinct('category')->count('category'),
-            'monthly_orders' => 45,
+            'total_categories' => Category::count(),
+            'monthly_chats' => ChatConversation::whereMonth('created_at', now()->month)
+                ->whereYear('created_at', now()->year)
+                ->count(),
         ];
 
         $recentProducts = Product::latest()->take(5)->get();
@@ -53,8 +57,9 @@ class AdminController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:products,slug',
-            'category' => 'required|string|max:255',
+            'category_id' => 'required|exists:categories,id',
             'description' => 'nullable|string',
+            'price' => 'nullable|numeric|min:0',
             'image' => 'nullable|image|max:2048',
             'badge' => 'nullable|string|max:255',
             'status' => 'required|in:Aktif,Draft',
@@ -62,7 +67,6 @@ class AdminController extends Controller
 
         $data['slug'] = $data['slug'] ?: Str::slug($data['name']);
 
-        // Handle file upload
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('products', 'public');
         } else {
@@ -84,8 +88,9 @@ class AdminController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:products,slug,'.$product->id,
-            'category' => 'required|string|max:255',
+            'category_id' => 'required|exists:categories,id',
             'description' => 'nullable|string',
+            'price' => 'nullable|numeric|min:0',
             'image' => 'nullable|image|max:2048',
             'badge' => 'nullable|string|max:255',
             'status' => 'required|in:Aktif,Draft',
@@ -295,12 +300,19 @@ class AdminController extends Controller
             'title' => 'required|string|max:255',
             'content' => 'required|string',
             'icon' => 'nullable|string|max:50|in:'.implode(',', Tip::iconOptions()),
+            'background_image' => 'nullable|image|max:2048',
             'order' => 'nullable|integer|min:0',
             'is_active' => 'boolean',
         ]);
 
         $data['is_active'] = $request->boolean('is_active');
         $data['order'] = $data['order'] ?? 0;
+
+        if ($request->hasFile('background_image')) {
+            $data['background_image'] = $request->file('background_image')->store('tips', 'public');
+        } else {
+            unset($data['background_image']);
+        }
 
         Tip::create($data);
 
@@ -318,12 +330,29 @@ class AdminController extends Controller
             'title' => 'required|string|max:255',
             'content' => 'required|string',
             'icon' => 'nullable|string|max:50|in:'.implode(',', Tip::iconOptions()),
+            'background_image' => 'nullable|image|max:2048',
             'order' => 'nullable|integer|min:0',
             'is_active' => 'boolean',
         ]);
 
         $data['is_active'] = $request->boolean('is_active');
         $data['order'] = $data['order'] ?? 0;
+
+        if ($request->boolean('remove_background_image') && $tip->background_image) {
+            if (! str_starts_with($tip->background_image, 'http')) {
+                Storage::disk('public')->delete($tip->background_image);
+            }
+            $data['background_image'] = null;
+        }
+
+        if ($request->hasFile('background_image')) {
+            if ($tip->background_image && ! str_starts_with($tip->background_image, 'http')) {
+                Storage::disk('public')->delete($tip->background_image);
+            }
+            $data['background_image'] = $request->file('background_image')->store('tips', 'public');
+        } else {
+            unset($data['background_image']);
+        }
 
         $tip->update($data);
 
@@ -332,23 +361,102 @@ class AdminController extends Controller
 
     public function tipsDestroy(Tip $tip): RedirectResponse
     {
+        if ($tip->background_image && ! str_starts_with($tip->background_image, 'http')) {
+            Storage::disk('public')->delete($tip->background_image);
+        }
         $tip->delete();
 
         return redirect()->route('admin.tips')->with('success', 'Tips berhasil dihapus.');
+    }
+
+    public function categories(): View
+    {
+        $categories = Category::latest()->get();
+
+        return view('admin.categories.index', compact('categories'));
+    }
+
+    public function categoriesCreate(): View
+    {
+        return view('admin.categories.create');
+    }
+
+    public function categoriesStore(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'slug' => 'nullable|string|max:255|unique:categories,slug',
+            'image' => 'nullable|image|max:2048',
+            'is_active' => 'boolean',
+        ]);
+
+        $data['slug'] = $data['slug'] ?: Str::slug($data['name']);
+        $data['is_active'] = $request->boolean('is_active');
+
+        if ($request->hasFile('image')) {
+            $data['image'] = $request->file('image')->store('categories', 'public');
+        } else {
+            unset($data['image']);
+        }
+
+        Category::create($data);
+
+        return redirect()->route('admin.categories')->with('success', 'Kategori berhasil ditambahkan.');
+    }
+
+    public function categoriesEdit(Category $category): View
+    {
+        return view('admin.categories.edit', compact('category'));
+    }
+
+    public function categoriesUpdate(Request $request, Category $category): RedirectResponse
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:255',
+            'slug' => 'nullable|string|max:255|unique:categories,slug,'.$category->id,
+            'image' => 'nullable|image|max:2048',
+            'is_active' => 'boolean',
+        ]);
+
+        $data['slug'] = $data['slug'] ?: Str::slug($data['name']);
+        $data['is_active'] = $request->boolean('is_active');
+
+        if ($request->boolean('remove_image') && $category->image) {
+            if (! str_starts_with($category->image, 'http')) {
+                Storage::disk('public')->delete($category->image);
+            }
+            $data['image'] = null;
+        }
+
+        if ($request->hasFile('image')) {
+            if ($category->image && ! str_starts_with($category->image, 'http')) {
+                Storage::disk('public')->delete($category->image);
+            }
+            $data['image'] = $request->file('image')->store('categories', 'public');
+        } else {
+            unset($data['image']);
+        }
+
+        $category->update($data);
+
+        return redirect()->route('admin.categories')->with('success', 'Kategori berhasil diperbarui.');
+    }
+
+    public function categoriesDestroy(Category $category): RedirectResponse
+    {
+        if ($category->image && ! str_starts_with($category->image, 'http')) {
+            Storage::disk('public')->delete($category->image);
+        }
+        $category->delete();
+
+        return redirect()->route('admin.categories')->with('success', 'Kategori berhasil dihapus.');
     }
 
     public function settings(): View
     {
         $settings = Setting::pluck('value', 'key')->toArray();
 
-        $categories = Product::where('status', 'Aktif')
-            ->distinct()
-            ->pluck('category')
-            ->sort()
-            ->values()
-            ->toArray();
-
-        return view('admin.settings', compact('settings', 'categories'));
+        return view('admin.settings', compact('settings'));
     }
 
     public function settingsUpdate(Request $request): RedirectResponse
@@ -366,12 +474,6 @@ class AdminController extends Controller
         $rules['hero_slide_3'] = 'nullable|image|max:2048';
         $rules['hero_slide_4'] = 'nullable|image|max:2048';
 
-        foreach ($request->allFiles() as $key => $file) {
-            if (str_starts_with($key, 'category_image_')) {
-                $rules[$key] = 'nullable|image|max:2048';
-            }
-        }
-
         $request->validate($rules);
 
         foreach ($textKeys as $key) {
@@ -386,14 +488,6 @@ class AdminController extends Controller
         foreach ($imageKeys as $key) {
             if ($request->hasFile($key)) {
                 $path = $request->file($key)->store('settings', 'public');
-                Setting::updateOrCreate(['key' => $key], ['value' => $path]);
-                Cache::forget('setting.'.$key);
-            }
-        }
-
-        foreach ($request->allFiles() as $key => $file) {
-            if (str_starts_with($key, 'category_image_')) {
-                $path = $file->store('settings', 'public');
                 Setting::updateOrCreate(['key' => $key], ['value' => $path]);
                 Cache::forget('setting.'.$key);
             }

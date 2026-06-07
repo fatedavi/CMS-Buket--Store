@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Storage;
 class Product extends Model
 {
     protected $fillable = [
-        'name', 'slug', 'category', 'description',
+        'name', 'slug', 'category_id', 'description', 'price',
         'image', 'images', 'badge', 'status',
     ];
 
@@ -16,7 +16,13 @@ class Product extends Model
     {
         return [
             'images' => 'array',
+            'price' => 'decimal:2',
         ];
+    }
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
     }
 
     public function getImageUrlAttribute(): string

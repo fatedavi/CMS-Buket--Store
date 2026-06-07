@@ -17,8 +17,8 @@
         <span class="text-xs text-warm-gray">Kategori Aktif</span>
     </div>
     <div class="bg-white rounded-2xl border border-amber-100 p-5">
-        <span class="font-playfair text-2xl text-dark-oak block">{{ $stats['monthly_orders'] }}</span>
-        <span class="text-xs text-warm-gray">Pesanan WA Bulan Ini</span>
+        <span class="font-playfair text-2xl text-dark-oak block">{{ $stats['monthly_chats'] }}</span>
+        <span class="text-xs text-warm-gray">Riwayat Chat Bulan Ini</span>
     </div>
 </div>
 
@@ -43,7 +43,7 @@
                     @if($imgSrc)<img src="{{ $imgSrc }}" class="w-10 h-10 rounded object-cover">@else<div class="w-10 h-10 rounded bg-cream"></div>@endif
                 </td>
                 <td class="px-4 py-3 text-sm text-dark-oak">{{ $product->name }}</td>
-                <td class="px-4 py-3 text-sm text-warm-gray">{{ $product->category }}</td>
+                <td class="px-4 py-3 text-sm text-warm-gray">{{ $product->category->name ?? '—' }}</td>
                 <td class="px-4 py-3">
                     <span class="px-2 py-1 rounded text-xs {{ $product->status === 'Aktif' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' }}">
                         {{ $product->status }}

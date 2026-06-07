@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Article;
+use App\Models\Category;
 use App\Models\Product;
 use App\Models\Setting;
 use App\Models\Tip;
@@ -14,26 +15,48 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(AdminSeeder::class);
 
+        $categories = [
+            ['name' => 'Wisuda', 'slug' => 'wisuda', 'image' => 'https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=400'],
+            ['name' => 'Anniversary', 'slug' => 'anniversary', 'image' => 'https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=400'],
+            ['name' => 'Ulang Tahun', 'slug' => 'ulang-tahun', 'image' => 'https://images.unsplash.com/photo-1490750967868-88df5691cc45?w=400'],
+            ['name' => 'Wedding', 'slug' => 'wedding', 'image' => 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=400'],
+            ['name' => 'Custom', 'slug' => 'custom', 'image' => 'https://images.unsplash.com/photo-1508610048659-a06b669e3321?w=400'],
+        ];
+
+        foreach ($categories as $data) {
+            Category::create($data);
+        }
+
+        $categoryMap = [
+            'Wisuda' => 1,
+            'Anniversary' => 2,
+            'Ulang Tahun' => 3,
+            'Wedding' => 4,
+            'Custom' => 5,
+        ];
+
         $products = [
-            ['name' => 'Pink Romance', 'slug' => 'pink-romance', 'category' => 'Wisuda', 'badge' => 'Bestseller', 'description' => 'Rangkaian bunga mawar pink yang elegan, cocok untuk hadiah wisuda yang berkesan. Menggunakan mawar segar pilihan dengan tambahan baby breath dan daun hijau segar. Tersedia dalam ukuran medium dan large.', 'image' => 'https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=600', 'images' => ['https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=800', 'https://images.unsplash.com/photo-1508610048659-a06b669e3321?w=800', 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=800', 'https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=800']],
-            ['name' => 'Cream Elegance', 'slug' => 'cream-elegance', 'category' => 'Anniversary', 'badge' => null, 'description' => 'Buket anniversary dengan nuansa cream yang mewah dan elegan.', 'image' => 'https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=600', 'images' => ['https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=800', 'https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=800', 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=800']],
-            ['name' => 'Garden Fresh', 'slug' => 'garden-fresh', 'category' => 'Ulang Tahun', 'badge' => 'Baru', 'description' => 'Segar dan ceria, sempurna untuk ulang tahun.', 'image' => 'https://images.unsplash.com/photo-1490750967868-88df5691cc45?w=600', 'images' => ['https://images.unsplash.com/photo-1490750967868-88df5691cc45?w=800', 'https://images.unsplash.com/photo-1508610048659-a06b669e3321?w=800']],
-            ['name' => 'Terracotta Bloom', 'slug' => 'terracotta-bloom', 'category' => 'Wisuda', 'badge' => 'Populer', 'description' => 'Buket wisuda dengan nuansa terracotta yang hangat dan modern.', 'image' => 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=600'],
-            ['name' => 'Lavender Dream', 'slug' => 'lavender-dream', 'category' => 'Anniversary', 'badge' => null, 'description' => 'Buket bernuansa lavender yang romantis untuk anniversary.', 'image' => 'https://images.unsplash.com/photo-1508610048659-a06b669e3321?w=600'],
-            ['name' => 'Sunny Daisy', 'slug' => 'sunny-daisy', 'category' => 'Ulang Tahun', 'badge' => 'Baru', 'description' => 'Buket ceria dengan bunga daisy kuning untuk ulang tahun.', 'image' => 'https://images.unsplash.com/photo-1463936575829-25148e1db1b8?w=600'],
-            ['name' => 'White Purity', 'slug' => 'white-purity', 'category' => 'Wedding', 'badge' => null, 'description' => 'Buket putih elegan untuk momen pernikahan yang suci.', 'image' => 'https://images.unsplash.com/photo-1593698054589-22f60f85bced?w=600'],
-            ['name' => 'Forest Sage', 'slug' => 'forest-sage', 'category' => 'Wisuda', 'badge' => 'Bestseller', 'description' => 'Buket dengan nuansa hijau sage yang natural dan segar.', 'image' => 'https://images.unsplash.com/photo-1420593248178-d88870618ca0?w=600'],
-            ['name' => 'Blush Peony', 'slug' => 'blush-peony', 'category' => 'Anniversary', 'badge' => null, 'description' => 'Buket peony warna blush pink yang lembut dan manis.', 'image' => 'https://images.unsplash.com/photo-1455659817273-f96807779a8a?w=600'],
-            ['name' => 'Rose Gold', 'slug' => 'rose-gold', 'category' => 'Wedding', 'badge' => 'Baru', 'description' => 'Buket rose gold yang mewah untuk momen istimewa.', 'image' => 'https://images.unsplash.com/photo-1519378058457-4c29a0a2efac?w=600'],
-            ['name' => 'Spring Meadow', 'slug' => 'spring-meadow', 'category' => 'Custom', 'badge' => null, 'description' => 'Rangkaian bunga padang rumput segar untuk berbagai acara.', 'image' => 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=600'],
-            ['name' => 'Classic Red', 'slug' => 'classic-red', 'category' => 'Anniversary', 'badge' => 'Bestseller', 'description' => 'Buket mawar merah klasik yang timeless untuk anniversary.', 'image' => 'https://images.unsplash.com/photo-1455659817273-f96807779a8a?w=600'],
+            ['name' => 'Pink Romance', 'slug' => 'pink-romance', 'category' => 'Wisuda', 'badge' => 'Bestseller', 'description' => 'Rangkaian bunga mawar pink yang elegan, cocok untuk hadiah wisuda yang berkesan. Menggunakan mawar segar pilihan dengan tambahan baby breath dan daun hijau segar. Tersedia dalam ukuran medium dan large.', 'price' => 150000, 'image' => 'https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=600', 'images' => ['https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=800', 'https://images.unsplash.com/photo-1508610048659-a06b669e3321?w=800', 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=800', 'https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=800']],
+            ['name' => 'Cream Elegance', 'slug' => 'cream-elegance', 'category' => 'Anniversary', 'badge' => null, 'description' => 'Buket anniversary dengan nuansa cream yang mewah dan elegan.', 'price' => 175000, 'image' => 'https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=600', 'images' => ['https://images.unsplash.com/photo-1561181286-d3fee7d55364?w=800', 'https://images.unsplash.com/photo-1487530811176-3780de880c2d?w=800', 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=800']],
+            ['name' => 'Garden Fresh', 'slug' => 'garden-fresh', 'category' => 'Ulang Tahun', 'badge' => 'Baru', 'description' => 'Segar dan ceria, sempurna untuk ulang tahun.', 'price' => 125000, 'image' => 'https://images.unsplash.com/photo-1490750967868-88df5691cc45?w=600', 'images' => ['https://images.unsplash.com/photo-1490750967868-88df5691cc45?w=800', 'https://images.unsplash.com/photo-1508610048659-a06b669e3321?w=800']],
+            ['name' => 'Terracotta Bloom', 'slug' => 'terracotta-bloom', 'category' => 'Wisuda', 'badge' => 'Populer', 'description' => 'Buket wisuda dengan nuansa terracotta yang hangat dan modern.', 'price' => 160000, 'image' => 'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=600'],
+            ['name' => 'Lavender Dream', 'slug' => 'lavender-dream', 'category' => 'Anniversary', 'badge' => null, 'description' => 'Buket bernuansa lavender yang romantis untuk anniversary.', 'price' => 185000, 'image' => 'https://images.unsplash.com/photo-1508610048659-a06b669e3321?w=600'],
+            ['name' => 'Sunny Daisy', 'slug' => 'sunny-daisy', 'category' => 'Ulang Tahun', 'badge' => 'Baru', 'description' => 'Buket ceria dengan bunga daisy kuning untuk ulang tahun.', 'price' => 110000, 'image' => 'https://images.unsplash.com/photo-1463936575829-25148e1db1b8?w=600'],
+            ['name' => 'White Purity', 'slug' => 'white-purity', 'category' => 'Wedding', 'badge' => null, 'description' => 'Buket putih elegan untuk momen pernikahan yang suci.', 'price' => 250000, 'image' => 'https://images.unsplash.com/photo-1593698054589-22f60f85bced?w=600'],
+            ['name' => 'Forest Sage', 'slug' => 'forest-sage', 'category' => 'Wisuda', 'badge' => 'Bestseller', 'description' => 'Buket dengan nuansa hijau sage yang natural dan segar.', 'price' => 145000, 'image' => 'https://images.unsplash.com/photo-1420593248178-d88870618ca0?w=600'],
+            ['name' => 'Blush Peony', 'slug' => 'blush-peony', 'category' => 'Anniversary', 'badge' => null, 'description' => 'Buket peony warna blush pink yang lembut dan manis.', 'price' => 200000, 'image' => 'https://images.unsplash.com/photo-1455659817273-f96807779a8a?w=600'],
+            ['name' => 'Rose Gold', 'slug' => 'rose-gold', 'category' => 'Wedding', 'badge' => 'Baru', 'description' => 'Buket rose gold yang mewah untuk momen istimewa.', 'price' => 275000, 'image' => 'https://images.unsplash.com/photo-1519378058457-4c29a0a2efac?w=600'],
+            ['name' => 'Spring Meadow', 'slug' => 'spring-meadow', 'category' => 'Custom', 'badge' => null, 'description' => 'Rangkaian bunga padang rumput segar untuk berbagai acara.', 'price' => 135000, 'image' => 'https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=600'],
+            ['name' => 'Classic Red', 'slug' => 'classic-red', 'category' => 'Anniversary', 'badge' => 'Bestseller', 'description' => 'Buket mawar merah klasik yang timeless untuk anniversary.', 'price' => 165000, 'image' => 'https://images.unsplash.com/photo-1455659817273-f96807779a8a?w=600'],
         ];
 
         foreach ($products as $data) {
             $images = $data['images'] ?? null;
-            unset($data['images']);
+            $categoryName = $data['category'];
+            unset($data['category'], $data['images']);
             Product::create(array_merge($data, [
-                'status' => in_array($data['slug'], ['terracotta-bloom']) ? 'Draft' : 'Aktif',
+                'category_id' => $categoryMap[$categoryName],
+                'status' => $data['slug'] === 'terracotta-bloom' ? 'Draft' : 'Aktif',
                 'images' => $images,
             ]));
         }

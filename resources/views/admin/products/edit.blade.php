@@ -24,12 +24,23 @@
 
         <div>
             <label class="block text-sm font-medium text-dark-oak mb-1">Kategori</label>
-            <select name="category" class="w-full border border-sand rounded-xl px-4 py-2.5 focus:border-sage-green focus:outline-none focus:ring-2 focus:ring-sage-green/20">
-                @foreach(['Wisuda','Anniversary','Ulang Tahun','Wedding','Custom'] as $cat)
-                <option value="{{ $cat }}" {{ old('category', $product->category) === $cat ? 'selected' : '' }}>{{ $cat }}</option>
+            <select name="category_id" class="w-full border border-sand rounded-xl px-4 py-2.5 focus:border-sage-green focus:outline-none focus:ring-2 focus:ring-sage-green/20">
+                <option value="">Pilih kategori</option>
+                @foreach(\App\Models\Category::where('is_active', true)->get() as $cat)
+                <option value="{{ $cat->id }}" {{ old('category_id', $product->category_id) == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
                 @endforeach
             </select>
-            @error('category')<p class="text-terracotta text-xs mt-1">{{ $message }}</p>@enderror
+            @error('category_id')<p class="text-terracotta text-xs mt-1">{{ $message }}</p>@enderror
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-dark-oak mb-1">Harga</label>
+            <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-warm-gray text-sm">Rp</span>
+                <input type="number" name="price" value="{{ old('price', $product->price) }}" min="0" step="500"
+                       class="w-full border border-sand rounded-xl pl-10 pr-4 py-2.5 focus:border-sage-green focus:outline-none focus:ring-2 focus:ring-sage-green/20">
+            </div>
+            @error('price')<p class="text-terracotta text-xs mt-1">{{ $message }}</p>@enderror
         </div>
 
         <div>

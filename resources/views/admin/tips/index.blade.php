@@ -38,6 +38,7 @@
         <table class="w-full">
             <thead class="bg-cream">
                 <tr>
+                    <th class="px-4 py-3 text-left text-sm text-dark-oak font-medium">Gambar</th>
                     <th class="px-4 py-3 text-left text-sm text-dark-oak font-medium">Icon</th>
                     <th class="px-4 py-3 text-left text-sm text-dark-oak font-medium">Judul</th>
                     <th class="px-4 py-3 text-left text-sm text-dark-oak font-medium">Konten</th>
@@ -50,6 +51,15 @@
                 @forelse($tips as $tip)
                 <tr class="border-t border-amber-100 hover:bg-[#faf8f4]"
                     x-show="filteredItems.some(i => i.title === '{{ $tip->title }}')">
+                    <td class="px-4 py-3">
+                        @if($tip->background_image_url)
+                        <img src="{{ $tip->background_image_url }}" class="w-20 h-12 rounded-lg object-cover border border-amber-100">
+                        @else
+                        <div class="w-20 h-12 rounded-lg bg-cream border border-amber-100 flex items-center justify-center">
+                            <svg class="w-4 h-4 text-sand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        </div>
+                        @endif
+                    </td>
                     <td class="px-4 py-3"><x-icons.tip :icon="$tip->icon ?? 'lightbulb'" class="w-6 h-6 text-dark-oak" /></td>
                     <td class="px-4 py-3 text-sm text-dark-oak">{{ $tip->title }}</td>
                     <td class="px-4 py-3 text-sm text-warm-gray max-w-xs truncate">{{ Str::limit($tip->content, 80) }}</td>
@@ -70,12 +80,12 @@
                 </tr>
                 @empty
                 <tr class="border-t border-amber-100">
-                    <td colspan="6" class="px-4 py-8 text-center text-warm-gray text-sm">Belum ada tips. <a href="{{ route('admin.tips.create') }}" class="text-sage-green underline">Tambah tips</a></td>
+                    <td colspan="7" class="px-4 py-8 text-center text-warm-gray text-sm">Belum ada tips. <a href="{{ route('admin.tips.create') }}" class="text-sage-green underline">Tambah tips</a></td>
                 </tr>
                 @endforelse
                 <tr x-show="items.length > 0 && filteredItems.length === 0"
                     class="border-t border-amber-100">
-                    <td colspan="6" class="px-4 py-8 text-center text-warm-gray text-sm">Tidak ada tips yang cocok dengan filter.</td>
+                    <td colspan="7" class="px-4 py-8 text-center text-warm-gray text-sm">Tidak ada tips yang cocok dengan filter.</td>
                 </tr>
             </tbody>
         </table>

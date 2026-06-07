@@ -1,14 +1,14 @@
 @extends('layouts.admin')
 
 @section('content')
-<h1 class="font-playfair text-2xl text-dark-oak mb-6">Tambah Produk Baru</h1>
+<h1 class="font-playfair text-2xl text-dark-oak mb-6">Tambah Kategori Baru</h1>
 
 <div class="bg-white rounded-2xl border border-amber-100 p-6">
-    <form action="{{ route('admin.products.store') }}" method="POST" enctype="multipart/form-data" class="space-y-5">
+    <form action="{{ route('admin.categories.store') }}" method="POST" enctype="multipart/form-data" class="space-y-5">
         @csrf
 
         <div>
-            <label class="block text-sm font-medium text-dark-oak mb-1">Nama Produk</label>
+            <label class="block text-sm font-medium text-dark-oak mb-1">Nama Kategori</label>
             <input type="text" name="name" value="{{ old('name') }}"
                    class="w-full border border-sand rounded-xl px-4 py-2.5 focus:border-sage-green focus:outline-none focus:ring-2 focus:ring-sage-green/20">
             @error('name')<p class="text-terracotta text-xs mt-1">{{ $message }}</p>@enderror
@@ -18,44 +18,15 @@
             <label class="block text-sm font-medium text-dark-oak mb-1">Slug</label>
             <input type="text" name="slug" value="{{ old('slug') }}"
                    class="w-full border border-sand rounded-xl px-4 py-2.5 focus:border-sage-green focus:outline-none focus:ring-2 focus:ring-sage-green/20">
-            <p class="text-xs text-warm-gray mt-1">Kosongkan untuk membuat otomatis dari nama produk</p>
+            <p class="text-xs text-warm-gray mt-1">Kosongkan untuk membuat otomatis dari nama kategori</p>
         </div>
 
         <div>
-            <label class="block text-sm font-medium text-dark-oak mb-1">Kategori</label>
-            <select name="category_id" class="w-full border border-sand rounded-xl px-4 py-2.5 focus:border-sage-green focus:outline-none focus:ring-2 focus:ring-sage-green/20">
-                <option value="">Pilih kategori</option>
-                @foreach(\App\Models\Category::where('is_active', true)->get() as $cat)
-                <option value="{{ $cat->id }}" {{ old('category_id') == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
-                @endforeach
-            </select>
-            @error('category_id')<p class="text-terracotta text-xs mt-1">{{ $message }}</p>@enderror
-        </div>
-
-        <div>
-            <label class="block text-sm font-medium text-dark-oak mb-1">Harga</label>
-            <div class="relative">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-warm-gray text-sm">Rp</span>
-                <input type="number" name="price" value="{{ old('price') }}" min="0" step="500"
-                       class="w-full border border-sand rounded-xl pl-10 pr-4 py-2.5 focus:border-sage-green focus:outline-none focus:ring-2 focus:ring-sage-green/20">
-            </div>
-            @error('price')<p class="text-terracotta text-xs mt-1">{{ $message }}</p>@enderror
-        </div>
-
-        <div>
-            <label class="block text-sm font-medium text-dark-oak mb-1">Deskripsi</label>
-            <textarea name="description" rows="4"
-                      class="w-full border border-sand rounded-xl px-4 py-2.5 focus:border-sage-green focus:outline-none focus:ring-2 focus:ring-sage-green/20">{{ old('description') }}</textarea>
-        </div>
-
-        {{-- Upload Gambar --}}
-        <div>
-            <label class="block text-sm font-medium text-dark-oak mb-2">Gambar Produk</label>
+            <label class="block text-sm font-medium text-dark-oak mb-2">Gambar Kategori</label>
             <div id="drop-zone"
                  class="relative border-2 border-dashed border-sand rounded-2xl p-6 text-center cursor-pointer hover:border-sage-green hover:bg-sage-green/5 transition-all group"
                  onclick="document.getElementById('image-input').click()">
 
-                {{-- Placeholder --}}
                 <div id="upload-placeholder">
                     <div class="w-12 h-12 rounded-full bg-cream flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
                         <svg class="w-6 h-6 text-sand" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -66,7 +37,6 @@
                     <p class="text-xs text-warm-gray mt-1">PNG, JPG, WEBP — Maks. 2MB</p>
                 </div>
 
-                {{-- Preview --}}
                 <div id="image-preview" class="hidden">
                     <img id="preview-img" src="" alt="Preview" class="mx-auto max-h-48 rounded-xl object-contain shadow">
                     <p id="preview-name" class="text-xs text-warm-gray mt-2 truncate"></p>
@@ -80,33 +50,21 @@
         </div>
 
         <div>
-            <label class="block text-sm font-medium text-dark-oak mb-1">Badge</label>
-            <select name="badge" class="w-full border border-sand rounded-xl px-4 py-2.5 focus:border-sage-green focus:outline-none focus:ring-2 focus:ring-sage-green/20">
-                <option value="">Tidak ada</option>
-                @foreach(['Bestseller','Baru','Populer'] as $b)
-                <option value="{{ $b }}" {{ old('badge') === $b ? 'selected' : '' }}>{{ $b }}</option>
-                @endforeach
-            </select>
-        </div>
-
-        <div>
-            <label class="block text-sm font-medium text-dark-oak mb-1">Status</label>
-            <select name="status" class="w-full border border-sand rounded-xl px-4 py-2.5 focus:border-sage-green focus:outline-none focus:ring-2 focus:ring-sage-green/20">
-                <option value="Aktif" {{ old('status') === 'Aktif' ? 'selected' : '' }}>Aktif</option>
-                <option value="Draft" {{ old('status') === 'Draft' ? 'selected' : '' }}>Draft</option>
-            </select>
+            <label class="flex items-center gap-2">
+                <input type="checkbox" name="is_active" value="1" {{ old('is_active', true) ? 'checked' : '' }} class="rounded border-sand text-sage-green focus:ring-sage-green">
+                <span class="text-sm text-dark-oak font-medium">Aktif</span>
+            </label>
         </div>
 
         <div class="flex gap-3 pt-2">
-            <button type="submit" class="bg-sage-green text-white rounded-xl px-6 py-2.5 font-medium hover:brightness-110 transition-all">Simpan Produk</button>
-            <a href="{{ route('admin.products') }}" class="border border-sand text-dark-oak rounded-xl px-6 py-2.5 font-medium hover:bg-cream transition-all">Batal</a>
+            <button type="submit" class="bg-sage-green text-white rounded-xl px-6 py-2.5 font-medium hover:brightness-110 transition-all">Simpan Kategori</button>
+            <a href="{{ route('admin.categories') }}" class="border border-sand text-dark-oak rounded-xl px-6 py-2.5 font-medium">Batal</a>
         </div>
     </form>
 </div>
 
 @push('scripts')
 <script>
-// Drag & drop
 const dropZone = document.getElementById('drop-zone');
 dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-sage-green','bg-sage-green/5'); });
 dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('border-sage-green','bg-sage-green/5'); });
