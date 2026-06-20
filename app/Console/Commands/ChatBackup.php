@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Storage;
 
 class ChatBackup extends Command
 {
-    protected $signature = 'chat:backup {--prune : Hapus percakapan closed yang sudah di-backup > 30 hari}';
+    protected $signature = 'chat:backup {--prune : Hapus percakapan closed yang sudah di-backup > X hari (default dari setting)}';
 
     protected $description = 'Backup semua percakapan chat ke file JSON';
 
@@ -23,12 +23,13 @@ class ChatBackup extends Command
         $this->info('Chat backup berhasil: '.$filename);
 
         if ($this->option('prune')) {
-            $cutoff = now()->subDays(30);
+            $pruneDays = (int) (setting('chat_prune_days', 30));
+            $cutoff = now()->subDays($pruneDays);
             $deleted = ChatConversation::where('status', 'closed')
                 ->where('updated_at', '<', $cutoff)
                 ->delete();
 
-            $this->info('Menghapus '.$deleted.' percakapan closed > 30 hari.');
+            $this->info('Menghapus '.$deleted.' percakapan closed > '.$pruneDays.' hari.');
         }
 
         return Command::SUCCESS;

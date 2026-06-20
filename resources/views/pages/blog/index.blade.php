@@ -16,7 +16,7 @@
             @foreach($articles as $article)
             <a href="{{ route('blog.show', $article['slug']) }}" class="bg-white border border-amber-100 rounded-xl overflow-hidden group">
                 <div class="aspect-[4/3] overflow-hidden">
-                    <img src="{{ $article['image'] }}" alt="{{ $article['title'] }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" loading="lazy">
+                    <img src="{{ $article->image_url }}" alt="{{ $article->title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform" loading="lazy">
                 </div>
                 <div class="p-4">
                     <span class="bg-cream text-warm-gray text-xs rounded-lg px-2 py-1">{{ $article['category'] }}</span>

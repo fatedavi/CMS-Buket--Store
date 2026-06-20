@@ -4,7 +4,7 @@
 <h1 class="font-playfair text-2xl text-dark-oak mb-6">Tambah Pengguna</h1>
 
 <div class="bg-white rounded-2xl border border-amber-100 p-6">
-    <form action="{{ route('admin.users.store') }}" method="POST" class="space-y-4">
+    <form action="{{ route('admin.users.store') }}" method="POST" id="form-user-create" class="space-y-4">
         @csrf
         <div>
             <label class="block text-sm font-medium text-dark-oak mb-1">Nama</label>
@@ -27,7 +27,7 @@
             </label>
         </div>
         <div class="flex gap-3 pt-4">
-            <button type="submit" class="bg-sage-green text-white rounded-xl px-6 py-2.5 font-medium hover:brightness-110 transition-all">Simpan</button>
+            <button type="button" @click.prevent="openConfirm('save', 'Simpan Pengguna', 'Simpan pengguna baru?', '', 'form-user-create')" class="bg-sage-green text-white rounded-xl px-6 py-2.5 font-medium hover:brightness-110 transition-all">Simpan</button>
             <a href="{{ route('admin.users') }}" class="border border-sand text-dark-oak rounded-xl px-6 py-2.5 font-medium">Batal</a>
         </div>
     </form>

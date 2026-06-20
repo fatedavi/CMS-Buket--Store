@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Console\Commands\ChatAutoClose;
 use App\Events\ChatClosed;
 use App\Events\MessageSent;
+use App\Helpers\ImageHelper;
 use App\Models\Article;
 use App\Models\Category;
 use App\Models\ChatConversation;
@@ -12,7 +14,6 @@ use App\Models\Product;
 use App\Models\Setting;
 use App\Models\Tip;
 use App\Models\User;
-use Carbon\Carbon;
 use Illuminate\Broadcasting\BroadcastException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -60,7 +61,7 @@ class AdminController extends Controller
             'category_id' => 'required|exists:categories,id',
             'description' => 'nullable|string',
             'price' => 'nullable|numeric|min:0',
-            'image' => 'nullable|image|max:2048',
+            'image' => 'nullable|image',
             'badge' => 'nullable|string|max:255',
             'status' => 'required|in:Aktif,Draft',
         ]);
@@ -69,6 +70,7 @@ class AdminController extends Controller
 
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('products', 'public');
+            ImageHelper::compress($data['image']);
         } else {
             unset($data['image']);
         }
@@ -91,7 +93,7 @@ class AdminController extends Controller
             'category_id' => 'required|exists:categories,id',
             'description' => 'nullable|string',
             'price' => 'nullable|numeric|min:0',
-            'image' => 'nullable|image|max:2048',
+            'image' => 'nullable|image',
             'badge' => 'nullable|string|max:255',
             'status' => 'required|in:Aktif,Draft',
         ]);
@@ -113,6 +115,7 @@ class AdminController extends Controller
                 Storage::disk('public')->delete($product->image);
             }
             $data['image'] = $request->file('image')->store('products', 'public');
+            ImageHelper::compress($data['image']);
         } else {
             // Tidak ada upload baru — jangan ubah image
             unset($data['image']);
@@ -150,12 +153,19 @@ class AdminController extends Controller
             'excerpt' => 'nullable|string',
             'content' => 'nullable|string',
             'category' => 'required|string|max:255',
-            'image' => 'nullable|string|max:500',
+            'image' => 'nullable|image',
             'date' => 'nullable|string|max:255',
         ]);
 
         $data['slug'] = $data['slug'] ?: Str::slug($data['title']);
         $data['date'] = $data['date'] ?: now()->format('j F Y');
+
+        if ($request->hasFile('image')) {
+            $data['image'] = $request->file('image')->store('articles', 'public');
+            ImageHelper::compress($data['image']);
+        } else {
+            unset($data['image']);
+        }
 
         Article::create($data);
 
@@ -175,11 +185,29 @@ class AdminController extends Controller
             'excerpt' => 'nullable|string',
             'content' => 'nullable|string',
             'category' => 'required|string|max:255',
-            'image' => 'nullable|string|max:500',
+            'image' => 'nullable|image',
             'date' => 'nullable|string|max:255',
         ]);
 
         $data['slug'] = $data['slug'] ?: Str::slug($data['title']);
+        $data['date'] = $data['date'] ?: now()->format('j F Y');
+
+        if ($request->boolean('remove_image') && $article->image) {
+            if (! str_starts_with($article->image, 'http')) {
+                Storage::disk('public')->delete($article->image);
+            }
+            $data['image'] = null;
+        }
+
+        if ($request->hasFile('image')) {
+            if ($article->image && ! str_starts_with($article->image, 'http')) {
+                Storage::disk('public')->delete($article->image);
+            }
+            $data['image'] = $request->file('image')->store('articles', 'public');
+            ImageHelper::compress($data['image']);
+        } else {
+            unset($data['image']);
+        }
 
         $article->update($data);
 
@@ -195,19 +223,52 @@ class AdminController extends Controller
 
     public function chat(): View
     {
+        return view('admin.chat.index');
+    }
+
+    public function chatConversations(): JsonResponse
+    {
         $conversations = ChatConversation::withCount('messages')
             ->where('status', 'active')
             ->latest()
-            ->paginate(20);
+            ->get();
 
-        return view('admin.chat.index', compact('conversations'));
+        $convos = $conversations->map(fn ($c) => [
+            'id' => $c->id,
+            'customer_name' => $c->customer_name ?? 'Pengunjung',
+            'session_id' => $c->session_id,
+            'status' => $c->status,
+            'messages_count' => $c->messages_count,
+            'created_at' => $c->created_at,
+            'initial' => strtoupper(substr($c->customer_name ?? 'P', 0, 1)),
+            'color' => ['#6b8f54', '#c4956a', '#8b5e3c', '#a7c4a0', '#d4a574', '#5a7a4a'][$c->id % 6],
+        ])->values();
+
+        return response()->json($convos);
     }
 
-    public function chatShow(ChatConversation $conversation): View
+    public function chatAutoCloseCheck(): JsonResponse
     {
-        $conversation->load('messages');
+        $cacheKey = 'auto_close_last_run';
+        $lastRun = Cache::get($cacheKey);
+        $interval = 5; // menit
 
-        return view('admin.chat.show', compact('conversation'));
+        if ($lastRun && $lastRun->gt(now()->subMinutes($interval))) {
+            return response()->json(['closed' => 0, 'next' => $interval - now()->diffInMinutes($lastRun)]);
+        }
+
+        $hours = (int) (setting('chat_auto_close_hours', 3));
+        $cmd = new ChatAutoClose;
+        $closed = $cmd->closeInactive($hours);
+
+        Cache::put($cacheKey, now(), 3600);
+
+        return response()->json(['closed' => $closed, 'next' => $interval]);
+    }
+
+    public function chatShow(ChatConversation $conversation): RedirectResponse
+    {
+        return redirect()->route('admin.chat');
     }
 
     public function chatMessages(ChatConversation $conversation): JsonResponse
@@ -269,7 +330,7 @@ class AdminController extends Controller
         return view('admin.chat.archive-show', compact('conversation'));
     }
 
-    public function chatClose(ChatConversation $conversation): RedirectResponse
+    public function chatClose(Request $request, ChatConversation $conversation): RedirectResponse|JsonResponse
     {
         $conversation->update(['status' => 'closed']);
 
@@ -279,7 +340,11 @@ class AdminController extends Controller
             // Reverb tidak jalan — chat tetap berfungsi
         }
 
-        return redirect()->route('admin.chat')->with('success', 'Percakapan ditutup.');
+        if ($request->expectsJson()) {
+            return response()->json(['success' => true]);
+        }
+
+        return redirect()->route('admin.index')->with('success', 'Percakapan ditutup.');
     }
 
     public function tips(): View
@@ -300,7 +365,7 @@ class AdminController extends Controller
             'title' => 'required|string|max:255',
             'content' => 'required|string',
             'icon' => 'nullable|string|max:50|in:'.implode(',', Tip::iconOptions()),
-            'background_image' => 'nullable|image|max:2048',
+            'background_image' => 'nullable|image',
             'order' => 'nullable|integer|min:0',
             'is_active' => 'boolean',
         ]);
@@ -310,6 +375,7 @@ class AdminController extends Controller
 
         if ($request->hasFile('background_image')) {
             $data['background_image'] = $request->file('background_image')->store('tips', 'public');
+            ImageHelper::compress($data['background_image']);
         } else {
             unset($data['background_image']);
         }
@@ -330,7 +396,7 @@ class AdminController extends Controller
             'title' => 'required|string|max:255',
             'content' => 'required|string',
             'icon' => 'nullable|string|max:50|in:'.implode(',', Tip::iconOptions()),
-            'background_image' => 'nullable|image|max:2048',
+            'background_image' => 'nullable|image',
             'order' => 'nullable|integer|min:0',
             'is_active' => 'boolean',
         ]);
@@ -350,6 +416,7 @@ class AdminController extends Controller
                 Storage::disk('public')->delete($tip->background_image);
             }
             $data['background_image'] = $request->file('background_image')->store('tips', 'public');
+            ImageHelper::compress($data['background_image']);
         } else {
             unset($data['background_image']);
         }
@@ -386,7 +453,7 @@ class AdminController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:categories,slug',
-            'image' => 'nullable|image|max:2048',
+            'image' => 'nullable|image',
             'is_active' => 'boolean',
         ]);
 
@@ -395,6 +462,7 @@ class AdminController extends Controller
 
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('categories', 'public');
+            ImageHelper::compress($data['image']);
         } else {
             unset($data['image']);
         }
@@ -414,7 +482,7 @@ class AdminController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'slug' => 'nullable|string|max:255|unique:categories,slug,'.$category->id,
-            'image' => 'nullable|image|max:2048',
+            'image' => 'nullable|image',
             'is_active' => 'boolean',
         ]);
 
@@ -433,6 +501,7 @@ class AdminController extends Controller
                 Storage::disk('public')->delete($category->image);
             }
             $data['image'] = $request->file('image')->store('categories', 'public');
+            ImageHelper::compress($data['image']);
         } else {
             unset($data['image']);
         }
@@ -461,18 +530,19 @@ class AdminController extends Controller
 
     public function settingsUpdate(Request $request): RedirectResponse
     {
-        $textKeys = ['store_name', 'whatsapp', 'address', 'instagram', 'hours'];
+        $textKeys = ['store_name', 'whatsapp', 'address', 'instagram', 'hours', 'chat_auto_close_hours', 'chat_prune_days'];
 
         $rules = [];
         foreach ($textKeys as $key) {
             $rules[$key] = $key === 'store_name' || $key === 'whatsapp' ? 'required|string|max:255' : 'nullable|string|max:255';
+            if ($key === 'chat_auto_close_hours' || $key === 'chat_prune_days') {
+                $rules[$key] = 'nullable|integer|min:1|max:365';
+            }
         }
 
-        $rules['hero_slide_0'] = 'nullable|image|max:2048';
-        $rules['hero_slide_1'] = 'nullable|image|max:2048';
-        $rules['hero_slide_2'] = 'nullable|image|max:2048';
-        $rules['hero_slide_3'] = 'nullable|image|max:2048';
-        $rules['hero_slide_4'] = 'nullable|image|max:2048';
+        for ($i = 0; $i < 5; $i++) {
+            $rules['hero_slide_'.$i] = 'nullable|image';
+        }
 
         $request->validate($rules);
 
@@ -488,6 +558,7 @@ class AdminController extends Controller
         foreach ($imageKeys as $key) {
             if ($request->hasFile($key)) {
                 $path = $request->file($key)->store('settings', 'public');
+                ImageHelper::compress($path);
                 Setting::updateOrCreate(['key' => $key], ['value' => $path]);
                 Cache::forget('setting.'.$key);
             }

@@ -13,6 +13,10 @@
     }
 }
 
+@layer base {
+    [x-cloak] { display: none !important; }
+}
+
 @layer components {
     .grain-overlay {
         position: fixed;

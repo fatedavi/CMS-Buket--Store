@@ -44,7 +44,9 @@ Route::prefix('/admin')->name('admin.')->middleware(['auth', 'is_admin', 'track.
     Route::get('/artikel/{article}/edit', [AdminController::class, 'articlesEdit'])->name('articles.edit');
     Route::put('/artikel/{article}', [AdminController::class, 'articlesUpdate'])->name('articles.update');
     Route::delete('/artikel/{article}', [AdminController::class, 'articlesDestroy'])->name('articles.destroy');
-    Route::get('/chat', [AdminController::class, 'chat'])->name('chat');
+    Route::redirect('/chat', '/admin')->name('chat');
+    Route::get('/chat/auto-close-check', [AdminController::class, 'chatAutoCloseCheck'])->name('chat.auto-close');
+    Route::get('/chat/data', [AdminController::class, 'chatConversations'])->name('chat.data');
     Route::get('/chat/arsip', [AdminController::class, 'chatArchive'])->name('chat.archive');
     Route::get('/chat/arsip/{conversation}', [AdminController::class, 'chatArchiveShow'])->name('chat.archive.show');
     Route::get('/chat/{conversation}', [AdminController::class, 'chatShow'])->name('chat.show');

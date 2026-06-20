@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Events\MessageSent;
+use App\Helpers\ImageHelper;
 use App\Models\ChatConversation;
 use App\Models\ChatMessage;
 use Illuminate\Broadcasting\BroadcastException;
@@ -47,7 +48,7 @@ class ChatController extends Controller
         $rules = ['message' => 'required|string|max:'.$maxMessage];
 
         if ($user) {
-            $rules['image'] = 'nullable|image|max:2048';
+            $rules['image'] = 'nullable|image';
         }
 
         $data = $request->validate($rules);
@@ -65,6 +66,7 @@ class ChatController extends Controller
         $imagePath = null;
         if ($user && $request->hasFile('image')) {
             $imagePath = $request->file('image')->store('chat', 'public');
+            ImageHelper::compress($imagePath, maxSizeKB: 2048, maxDimension: 1200);
         }
 
         $messageContent = $data['message'];

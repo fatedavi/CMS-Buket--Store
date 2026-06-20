@@ -4,7 +4,7 @@
 <h1 class="font-playfair text-2xl text-dark-oak mb-6">Edit Pengguna</h1>
 
 <div class="bg-white rounded-2xl border border-amber-100 p-6">
-    <form action="{{ route('admin.users.update', $user) }}" method="POST" class="space-y-4">
+    <form action="{{ route('admin.users.update', $user) }}" method="POST" id="form-user-edit-{{ $user->id }}" class="space-y-4">
         @csrf
         @method('PUT')
         <div>
@@ -28,9 +28,19 @@
             </label>
         </div>
         <div class="flex gap-3 pt-4">
-            <button type="submit" class="bg-sage-green text-white rounded-xl px-6 py-2.5 font-medium hover:brightness-110 transition-all">Simpan Perubahan</button>
+            <button type="button" @click.prevent="openConfirm('save', 'Simpan Perubahan', 'Simpan perubahan pengguna?', '', 'form-user-edit-{{ $user->id }}')" class="bg-sage-green text-white rounded-xl px-6 py-2.5 font-medium hover:brightness-110 transition-all">Simpan Perubahan</button>
             <a href="{{ route('admin.users') }}" class="border border-sand text-dark-oak rounded-xl px-6 py-2.5 font-medium">Batal</a>
+            @if($user->id !== auth()->id())
+            <button type="button" @click.prevent="openConfirm('delete', 'Hapus Pengguna', 'Hapus pengguna ini? Tindakan ini tidak dapat dibatalkan.', '', 'user-{{ $user->id }}')" class="ml-auto border border-terracotta/30 text-terracotta rounded-xl px-6 py-2.5 font-medium hover:bg-terracotta/5 transition-all">Hapus</button>
+            @endif
         </div>
     </form>
+
+    @if($user->id !== auth()->id())
+    <form action="{{ route('admin.users.destroy', $user) }}" method="POST" id="delete-form-user-{{ $user->id }}" class="hidden">
+        @csrf
+        @method('DELETE')
+    </form>
+    @endif
 </div>
 @endsection

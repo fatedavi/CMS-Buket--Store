@@ -9,7 +9,7 @@
 
 <article class="py-8 bg-linen">
     <div class="max-w-3xl mx-auto px-4">
-        <img src="{{ $article['image'] }}" alt="{{ $article['title'] }}" class="w-full h-[400px] object-cover rounded-2xl mb-6">
+        <img src="{{ $article->image_url }}" alt="{{ $article->title }}" class="w-full h-[400px] object-cover rounded-2xl mb-6">
         <span class="bg-cream text-warm-gray text-xs rounded-lg px-3 py-1">{{ $article['category'] }}</span>
         <span class="text-warm-gray text-sm ml-3">{{ $article['date'] }}</span>
         <h1 class="font-playfair text-3xl text-dark-oak mt-4">{{ $article['title'] }}</h1>
@@ -32,7 +32,7 @@
         <div class="grid md:grid-cols-3 gap-4">
             @foreach($related as $item)
             <a href="{{ route('blog.show', $item['slug']) }}" class="bg-white border border-amber-100 rounded-xl overflow-hidden flex">
-                <img src="{{ $item['image'] }}" alt="{{ $item['title'] }}" class="w-24 h-24 object-cover">
+                <img src="{{ $item->image_url }}" alt="{{ $item->title }}" class="w-24 h-24 object-cover">
                 <div class="p-3">
                     <h3 class="font-medium text-dark-oak text-sm">{{ $item['title'] }}</h3>
                 </div>
